@@ -27,7 +27,7 @@
     .board-wrap{overflow:hidden;border:1px solid #ffffff15;border-radius:18px;background:#182438;box-shadow:0 18px 55px #0003}
     .board-heading{height:45px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;background:#1b293d;border-bottom:1px solid #ffffff10;font-size:13px;color:#dce5f1}
     .board-heading small{color:var(--muted);font-size:11px}
-    canvas{display:block;width:100%;height:auto;aspect-ratio:900 / 520;touch-action:manipulation}
+    canvas{display:block;width:100%;height:auto;aspect-ratio:900 / 520;touch-action:manipulation;cursor:crosshair}
     .side{display:flex;flex-direction:column;gap:11px}
     .card{background:linear-gradient(155deg,#1c2a3e,#172235);border:1px solid #ffffff10;border-radius:16px;padding:15px}
     .card h2{font-size:15px;margin:0 0 10px;font-weight:600}
@@ -104,7 +104,7 @@
     <section class="game-layout">
       <div>
         <div class="board-wrap">
-          <div class="board-heading"><span>🏰 สมรภูมิเอเวอร์กรีน</span><small>คลิกช่องว่างเพื่อวางฮีโร่</small></div>
+          <div class="board-heading"><span>🏰 สมรภูมิเอเวอร์กรีน</span><small>คลิกพื้นว่างเพื่อวางฮีโร่ได้อย่างอิสระ</small></div>
           <canvas id="game" width="900" height="520" aria-label="แผนที่เกมป้องกันป้อม"></canvas>
         </div>
         <div class="legend"><span><i class="dot" style="background:#70e1bc"></i> ช่องวางฮีโร่</span><span><i class="dot" style="background:#edba70"></i> เส้นทางศัตรู</span><span>🧙 โจมตีไกล</span><span>🗡️ ประชิด · คริติคอล</span><span>🏃 พุ่งชน</span><span>🌪️ ผลักถอยหลัง</span><span>🐇 วิ่งเร็ว</span></div>
@@ -112,7 +112,7 @@
       <aside class="side">
         <section class="card selected">
           <h2>ฮีโร่ที่เลือก</h2>
-          <div id="hero-panel"><p class="hint">เลือกช่องที่มีฮีโร่เพื่อดูข้อมูลและอัปเกรด หรือคลิกช่องว่างเพื่อวางฮีโร่ใหม่</p></div>
+          <div id="hero-panel"><p class="hint">เลือกฮีโร่แล้วคลิกพื้นว่างเพื่อวางได้อย่างอิสระ คลิกฮีโร่ที่วางแล้วเพื่อดูข้อมูลและอัปเกรด</p></div>
         </section>
         <section class="card">
           <h2>🧭 เลือกผู้พิทักษ์เพื่อวาง</h2>
@@ -120,9 +120,9 @@
             <button class="hero-choice active" data-hero="mage"><span class="choice-icon">🧙</span><span class="choice-name">จอมเวท</span><span class="choice-cost">🪙 100 · ยิงไกล</span><span class="choice-cooldown">คูลดาวน์ 0.82 วินาที</span></button>
             <button class="hero-choice" data-hero="knight"><span class="choice-icon">🗡️</span><span class="choice-name">นักดาบ</span><span class="choice-cost">🪙 125 · คริติคอล</span><span class="choice-cooldown">คูลดาวน์ 0.72 วินาที</span></button>
             <button class="hero-choice" data-hero="runner"><span class="choice-icon">🏃</span><span class="choice-name">นักวิ่ง</span><span class="choice-cost">🪙 110 · พุ่งชน</span><span class="choice-cooldown">คูลดาวน์ 1.25 วินาที</span></button>
-            <button class="hero-choice" data-hero="wind"><span class="choice-icon">🌪️</span><span class="choice-name">Wind Spirit</span><span class="choice-cost">🪙 120 · ผลักศัตรู</span><span class="choice-cooldown">คูลดาวน์ 1.05 วินาที</span></button>
+            <button class="hero-choice" data-hero="wind"><span class="choice-icon">🌪️</span><span class="choice-name">วิญญาณลม</span><span class="choice-cost">🪙 120 · ผลักศัตรู</span><span class="choice-cooldown">คูลดาวน์ 0.5 วินาที</span></button>
           </div>
-          <p class="wave-note" id="build-note">เลือกช่องสีเขียวเพื่อวางจอมเวท</p>
+          <p class="wave-note" id="build-note">เลือกฮีโร่แล้วคลิกพื้นว่างเพื่อวางได้อย่างอิสระ</p>
         </section>
         <section class="card">
           <h2>⚔️ เริ่มการต่อสู้</h2>
@@ -172,12 +172,8 @@
         {x:325,y:180},{x:505,y:180},{x:505,y:390},{x:685,y:390},
         {x:685,y:255},{x:850,y:255},{x:935,y:255}
       ];
-      const pads = [
-        {x:75,y:235},{x:220,y:95},{x:235,y:415},{x:410,y:270},
-        {x:410,y:100},{x:585,y:105},{x:585,y:465},{x:765,y:155},{x:770,y:345}
-      ];
       const state = {gold:180,lives:20,wave:0,enemies:[],towers:[],shots:[],effects:[],selected:null,buildType:"mage",active:false,paused:false,speed:1,spawnLeft:0,spawnTimer:0,lastTime:0,over:false,autoWave:false,autoWaveDelay:8,autoWaveTimer:0,autoUpgrade:false};
-      let toastTimer;
+      let toastTimer,pointer={x:null,y:null,inside:false};
 
       function notify(message){
         toastEl.textContent=message;toastEl.classList.add("show");clearTimeout(toastTimer);
@@ -192,16 +188,16 @@
         pauseBtn.textContent=state.paused?"▶ เล่นต่อ":"⏸ หยุดเกม";
         autoWaveInput.checked=state.autoWave;autoWaveDelayInput.value=state.autoWaveDelay;autoUpgradeInput.checked=state.autoUpgrade;
         document.querySelectorAll(".hero-choice").forEach(button=>button.classList.toggle("active",button.dataset.hero===state.buildType));
-        const buildName=state.buildType==="knight"?"นักดาบ":state.buildType==="runner"?"นักวิ่ง":state.buildType==="wind"?"Wind Spirit":"จอมเวท";
-        buildNote.textContent=`เลือกช่องสีเขียวเพื่อวาง ${buildName}`;
+        const buildName=state.buildType==="knight"?"นักดาบ":state.buildType==="runner"?"นักวิ่ง":state.buildType==="wind"?"วิญญาณลม":"จอมเวท";
+        buildNote.textContent=`เลือก ${buildName} แล้วคลิกพื้นว่างเพื่อวางได้อย่างอิสระ`;
         renderPanel();
       }
       function renderPanel(){
         const tower=state.towers.find(t=>t.id===state.selected);
-        if(!tower){heroPanel.innerHTML='<p class="hint">เลือกช่องที่มีฮีโร่เพื่อดูข้อมูลและอัปเกรด หรือคลิกช่องว่างเพื่อวางฮีโร่ใหม่</p>';return}
+        if(!tower){heroPanel.innerHTML='<p class="hint">เลือกฮีโร่แล้วคลิกพื้นว่างเพื่อวางได้อย่างอิสระ คลิกฮีโร่ที่วางแล้วเพื่อดูข้อมูลและอัปเกรด</p>';return}
         const cost=upgradeCost(tower);
         const isKnight=tower.type==="knight",isRunner=tower.type==="runner",isWind=tower.type==="wind";
-        const heroName=isWind?"Wind Spirit":isRunner?"นักวิ่งพุ่งชน":isKnight?"นักดาบคริติคอล":"ผู้พิทักษ์เวทมนตร์";
+        const heroName=isWind?"วิญญาณลม":isRunner?"นักวิ่งพุ่งชน":isKnight?"นักดาบคริติคอล":"ผู้พิทักษ์เวทมนตร์";
         const role=isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
         const stat2=isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isKnight?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
         const icon=isWind?"🌪️":isRunner?"🏃":isKnight?"🗡️":"🧙";
@@ -237,8 +233,8 @@
         const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",cost=isWind?120:isRunner?110:isKnight?125:100;
         if(state.gold<cost){notify(`เหรียญไม่พอ! ต้องใช้ ${cost} เหรียญ`);return}
         state.gold-=cost;
-        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isWind?18:isRunner?42:isKnight?31:22,range:isWind?185:isRunner?210:isKnight?112:145,rate:isWind?1.05:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.4:0,attackAnim:0,dash:null};
-        state.towers.push(tower);state.selected=tower.id;notify(isWind?"เรียก Wind Spirit สำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
+        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isWind?18:isRunner?42:isKnight?31:22,range:isWind?185:isRunner?210:isKnight?112:145,rate:isWind?.5:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null};
+        state.towers.push(tower);state.selected=tower.id;notify(isWind?"เรียกวิญญาณลมสำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
       }
       function sellTower(){
         const tower=state.towers.find(t=>t.id===state.selected);if(!tower)return;
@@ -295,6 +291,15 @@
           if(enemy.progress===0)break;
           enemy.progress--;
         }
+      }
+      function canPlaceTower(x,y){
+        if(x<30||x>870||y<30||y>490)return false;
+        if(path.some((point,index)=>index<path.length-1&&pointSegmentDistance(x,y,point,path[index+1])<43))return false;
+        return !state.towers.some(tower=>Math.hypot(tower.x-x,tower.y-y)<48);
+      }
+      function placeTower(x,y){
+        if(!canPlaceTower(x,y)){notify("เลือกพื้นว่างที่ไม่ทับเส้นทางหรือฮีโร่ตัวอื่น");return}
+        addTower({x,y});
       }
       function update(dt){
         if(state.paused||state.over)return;
@@ -418,17 +423,14 @@
         ctx.strokeStyle="#98734e";ctx.lineWidth=63;ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(const p of path.slice(1))ctx.lineTo(p.x,p.y);ctx.stroke();
         ctx.strokeStyle="#dfc38c";ctx.lineWidth=53;ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(const p of path.slice(1))ctx.lineTo(p.x,p.y);ctx.stroke();
         ctx.strokeStyle="#f4dda9";ctx.lineWidth=2;ctx.setLineDash([7,17]);ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(const p of path.slice(1))ctx.lineTo(p.x,p.y);ctx.stroke();ctx.setLineDash([]);
-        pads.forEach((pad,index)=>{
-          const tower=state.towers.find(t=>Math.hypot(t.x-pad.x,t.y-pad.y)<1);
-          if(!tower){
-            const pulse=.5+.5*Math.sin(performance.now()*.002+index);
-            const melee=state.buildType==="knight"||state.buildType==="runner",wind=state.buildType==="wind";
-            const color=wind?"#8deaff":melee?"#f3a36e":"#70e1bc";
-            ctx.fillStyle=wind?"#24455acc":melee?"#4a3028cc":"#18392fcc";ctx.beginPath();ctx.arc(pad.x,pad.y,24+pulse*2,0,Math.PI*2);ctx.fill();
-            ctx.strokeStyle=color+"aa";ctx.lineWidth=2;ctx.setLineDash([4,5]);ctx.beginPath();ctx.arc(pad.x,pad.y,19+pulse*2,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-            ctx.fillStyle=color;ctx.font="22px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("+",pad.x,pad.y-1);
-          }
-        });
+        if(pointer.inside&&pointer.x!==null&&pointer.y!==null){
+          const valid=canPlaceTower(pointer.x,pointer.y),wind=state.buildType==="wind",melee=state.buildType==="knight"||state.buildType==="runner";
+          const color=valid?(wind?"#8deaff":melee?"#ffad72":"#70e1bc"):"#ff7777";
+          const radius=state.buildType==="wind"?185:state.buildType==="runner"?210:state.buildType==="knight"?112:145;
+          ctx.fillStyle=color+"0d";ctx.beginPath();ctx.arc(pointer.x,pointer.y,radius,0,Math.PI*2);ctx.fill();
+          ctx.strokeStyle=color+"88";ctx.lineWidth=2;ctx.setLineDash([5,6]);ctx.beginPath();ctx.arc(pointer.x,pointer.y,24,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+          ctx.fillStyle=color;ctx.font="20px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(valid?"＋":"×",pointer.x,pointer.y);
+        }
         ctx.textAlign="center";ctx.textBaseline="middle";
         ctx.font="30px sans-serif";ctx.fillText("🏰",850,214);ctx.font="12px sans-serif";ctx.fillStyle="#fff";ctx.fillText("ปราสาท",850,292);
         ctx.font="23px sans-serif";ctx.fillText("🚩",17,89);
@@ -485,14 +487,17 @@
         const dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy)));
         return Math.hypot(x-a.x-t*dx,y-a.y-t*dy);
       }
+      canvas.addEventListener("pointermove",event=>{
+        const rect=canvas.getBoundingClientRect();
+        pointer={x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height,inside:true};
+      });
+      canvas.addEventListener("pointerleave",()=>{pointer.inside=false});
       canvas.addEventListener("click",event=>{
         if(state.over)return;
         const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)*canvas.width/rect.width,y=(event.clientY-rect.top)*canvas.height/rect.height;
         const tower=state.towers.find(t=>Math.hypot(t.drawX-x,t.drawY-y)<29)||state.towers.find(t=>Math.hypot(t.x-x,t.y-y)<29);
         if(tower){state.selected=tower.id;updateHud();return}
-        const pad=pads.find(p=>Math.hypot(p.x-x,p.y-y)<29);
-        if(pad){const existing=state.towers.find(t=>Math.hypot(t.x-pad.x,t.y-pad.y)<1);if(existing){state.selected=existing.id;updateHud()}else addTower(pad)}
-        else{state.selected=null;updateHud()}
+        placeTower(x,y);
       });
       waveBtn.addEventListener("click",startWave);
       document.querySelectorAll(".hero-choice").forEach(button=>button.addEventListener("click",()=>{
