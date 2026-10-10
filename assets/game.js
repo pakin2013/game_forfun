@@ -45,11 +45,12 @@
         const tower=state.towers.find(t=>t.id===state.selected);
         if(!tower){heroPanel.innerHTML='<p class="hint">เลือกฮีโร่แล้วคลิกพื้นว่างเพื่อวางได้อย่างอิสระ คลิกฮีโร่ที่วางแล้วเพื่อดูข้อมูลและอัปเกรด</p>';return}
         const cost=upgradeCost(tower);
-        const isKnight=tower.type==="knight",isRunner=tower.type==="runner",isWind=tower.type==="wind",isWater=tower.type==="water",isLightning=tower.type==="lightning";
+        const isKnight=tower.type==="knight",isRunner=tower.type==="runner",isWind=tower.type==="wind",isWater=tower.type==="water",isLightning=tower.type==="lightning",isMage=tower.type==="mage";
         const heroName=isLightning?"ปืนสายฟ้า":isWater?"หมัดสายน้ำ":isWind?"วิญญาณลม":isRunner?"นักวิ่งพุ่งชน":isKnight?"นักดาบคริติคอล":"ผู้พิทักษ์เวทมนตร์";
-        const role=isLightning?"ยิงสายฟ้าใส่ศัตรู 3 ตัว":isWater?"ประชิด":isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
-        const stat2=isLightning?`เป้าหมาย<b>3 ตัว · ระยะ ${tower.range}</b>`:isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isKnight||isWater?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
-        const icon=isLightning?"⚡":isWater?"🥊":isWind?"🌪️":isRunner?"🏃":isKnight?"🗡️":"🧙";
+        const role=isMage?"วงเวทใหญ่ · ระเบิดเป็นวงกว้าง":isLightning?"ยิงสายฟ้าใส่ศัตรู 3 ตัว":isWater?"ประชิด":isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
+        const blastRadius=82+(tower.level-1)*10;
+        const stat2=isMage?`วงเวท<b>รัศมี ${blastRadius} · ระยะ ${tower.range}</b>`:isLightning?`เป้าหมาย<b>3 ตัว · ระยะ ${tower.range}</b>`:isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isKnight||isWater?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
+        const icon=isMage?"🧙":isLightning?"⚡":isWater?"🥊":isWind?"🌪️":isRunner?"🏃":isKnight?"🗡️":"🧙";
         heroPanel.innerHTML=`<div class="hero-row"><div class="hero-icon">${icon}</div><div><div class="hero-name">${heroName}</div><div class="hero-level">ระดับ ${tower.level} · ${tower.level>=5?"ระดับสูงสุด":role}</div></div></div>
           <div class="hero-stats"><div>พลังโจมตี<b>${tower.damage}${isKnight?" + คริติคอล":""}</b></div><div>${stat2}</div></div>
           <div class="wallet"><span>🪙 เหรียญที่มี</span><strong id="upgrade-wallet">${state.gold.toLocaleString("th-TH")}</strong></div>
@@ -57,7 +58,7 @@
           <div class="cooldown-track"><div class="cooldown-fill" id="cooldown-fill"></div></div>
           <div class="hero-actions"><button class="action primary" id="upgrade-btn" ${tower.level>=5||state.gold<cost?"disabled":""}>⬆️ อัปเกรด <span class="upgrade-cost">${tower.level>=5?"เต็มแล้ว":`🪙 ${cost}`}</span></button><button class="action danger" id="sell-btn">🗑️ ลบ · คืน 🪙 ${Math.floor(tower.invested*.7)}</button></div>
           <p class="upgrade-next">ลบฮีโร่แล้วรับคืน 70% ของต้นทุนวางและอัปเกรด</p>
-          ${tower.level<5?`<p class="upgrade-next">อัปเกรดถัดไป: พลังโจมตี +${isLightning?10:isWater?5:isWind?12:isRunner?20:isKnight?18:13}${isLightning?" · เป้าหมาย 3 ตัว":isWater?" · ระยะ +5":isWind?" · โอกาสผลัก +5%":isKnight?" · โอกาสคริติคอล +5%":isRunner?" · คูลดาวน์ลดลง":""}</p>`:""}`;
+          ${tower.level<5?`<p class="upgrade-next">อัปเกรดถัดไป: พลังโจมตี +${isMage?13:isLightning?10:isWater?5:isWind?12:isRunner?20:isKnight?18:13}${isMage?" · วงเวทกว้างขึ้น":isLightning?" · เป้าหมาย 3 ตัว":isWater?" · ระยะ +5":isWind?" · โอกาสผลัก +5%":isKnight?" · โอกาสคริติคอล +5%":isRunner?" · คูลดาวน์ลดลง":""}</p>`:""}`;
         const button=document.getElementById("upgrade-btn");
         if(button)button.addEventListener("click",()=>upgradeTower());
         document.getElementById("sell-btn").addEventListener("click",sellTower);
@@ -80,10 +81,10 @@
         autoWaveNote.textContent=`คลื่นถัดไปจะเริ่มใน ${state.autoWaveTimer.toFixed(1)} วินาที`;
       }
       function addTower(pad){
-        const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",isWater=state.buildType==="water",isLightning=state.buildType==="lightning",cost=isLightning?150:isWater?100:isWind?120:isRunner?110:isKnight?125:100;
+        const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",isWater=state.buildType==="water",isLightning=state.buildType==="lightning",isMage=state.buildType==="mage",cost=isLightning?150:isWater?100:isWind?120:isRunner?110:isKnight?125:100;
         if(state.gold<cost){notify(`เหรียญไม่พอ! ต้องใช้ ${cost} เหรียญ`);return}
         state.gold-=cost;
-        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isLightning?20:isWater?10:isWind?18:isRunner?42:isKnight?31:22,range:isLightning?240:isWater?100:isWind?185:isRunner?210:isKnight?112:145,rate:isLightning?1:isWater?.25:isWind?.78:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
+        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isLightning?20:isWater?10:isWind?18:isRunner?42:isKnight?31:isMage?50:22,range:isLightning?240:isWater?100:isWind?185:isRunner?210:isKnight?112:isMage?180:145,rate:isLightning?1:isWater?.25:isWind?.78:isRunner?1.25:isKnight?.72:isMage?5:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
         state.towers.push(tower);state.selected=tower.id;notify(isLightning?"วางปืนสายฟ้าสำเร็จ!":isWater?"วางหมัดสายน้ำสำเร็จ!":isWind?"เรียกวิญญาณลมสำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
       }
       function sellTower(){
@@ -98,7 +99,8 @@
         const cost=upgradeCost(tower);
         if(state.gold<cost){if(notifyUser)notify("เหรียญไม่พอสำหรับการอัปเกรด");return false}
         state.gold-=cost;tower.invested+=cost;tower.level++;
-        if(tower.type==="lightning"){tower.damage+=10;tower.range+=10}
+        if(tower.type==="mage"){tower.damage+=13;tower.range+=12}
+        else if(tower.type==="lightning"){tower.damage+=10;tower.range+=10}
         else if(tower.type==="water"){tower.damage+=5;tower.range+=5}
         else if(tower.type==="knight"){tower.damage+=18;tower.range+=5;tower.rate=Math.max(.36,tower.rate-.055);tower.critChance=Math.min(.5,tower.critChance+.05)}
         else if(tower.type==="runner"){tower.damage+=20;tower.range+=12;tower.rate=Math.max(.6,tower.rate-.1)}
@@ -127,7 +129,7 @@
       function spawnEnemy(){
         const boss=state.wave%5===0&&state.spawnLeft===1;
         const fast=!boss&&state.spawnLeft>0&&state.spawnLeft%4===0;
-        const hp=(34+state.wave*13)*(boss?5:fast?0.72:1);
+        const hp=boss?750:(34+state.wave*13)*(fast?0.72:1);
         const baseSpeed=48+Math.min(24,state.wave*1.5);
         state.enemies.push({x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:boss?37:fast?baseSpeed*2.15:baseSpeed,progress:0,boss,dragon:boss,stunTimer:5,fast,radius:boss?17:fast?11:12});
       }
@@ -175,7 +177,8 @@
             enemy.stunTimer-=dt;
             if(enemy.stunTimer<=0){
               enemy.stunTimer=5;
-              state.effects.push({type:"stun-pulse",x:enemy.x,y:enemy.y,radius:Math.hypot(canvas.width,canvas.height),duration:.7,life:.7});
+              state.effects.push({type:"dragon-roar",x:enemy.x,y:enemy.y,radius:Math.hypot(canvas.width,canvas.height),duration:1.2,life:1.2});
+              state.effects.push({type:"text",x:enemy.x,y:enemy.y-47,text:"คำราม!",duration:1,life:1,color:"#ffd27a"});
               for(const tower of state.towers){
                 tower.stunned=Math.max(tower.stunned,2);
                 state.effects.push({type:"text",x:tower.x,y:tower.y-31,text:"สตัน 2 วิ!",duration:.8,life:.8,color:"#ffd27a"});
@@ -237,6 +240,15 @@
               }else if(tower.type==="wind"){
                 tower.cooldown=tower.rate;
                 state.shots.push({type:"wind",x:tower.x,y:tower.y,target,damage:tower.damage,speed:350,knockbackChance:tower.knockbackChance});
+              }else if(tower.type==="mage"){
+                tower.cooldown=tower.rate;
+                const blastRadius=82+(tower.level-1)*10,targets=state.enemies.filter(enemy=>Math.hypot(enemy.x-target.x,enemy.y-target.y)<=blastRadius);
+                for(const enemy of targets){
+                  enemy.hp-=tower.damage;
+                  state.effects.push({type:"text",x:enemy.x,y:enemy.y-20,text:`-${tower.damage}`,duration:.7,life:.7,color:"#e6d5ff"});
+                  for(let i=0;i<5;i++)state.effects.push({type:"spark",x:enemy.x,y:enemy.y,vx:(Math.random()-.5)*130,vy:(Math.random()-.5)*130,duration:.38,life:.38,color:i%2?"#c9a5ff":"#fff0a8"});
+                }
+                state.effects.push({type:"arcane-blast",x:target.x,y:target.y,radius:blastRadius,duration:.85,life:.85});
               }else{tower.cooldown=tower.rate;state.shots.push({x:tower.x,y:tower.y-12,target,damage:tower.damage,speed:420})}
             }
           }
@@ -303,15 +315,10 @@
         ctx.strokeStyle="#98734e";ctx.lineWidth=63;ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(const p of path.slice(1))ctx.lineTo(p.x,p.y);ctx.stroke();
         ctx.strokeStyle="#dfc38c";ctx.lineWidth=53;ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(const p of path.slice(1))ctx.lineTo(p.x,p.y);ctx.stroke();
         ctx.strokeStyle="#f4dda9";ctx.lineWidth=2;ctx.setLineDash([7,17]);ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(const p of path.slice(1))ctx.lineTo(p.x,p.y);ctx.stroke();ctx.setLineDash([]);
-        for(const enemy of state.enemies){
-          if(enemy.dragon&&enemy.stunTimer<1.25){
-            ctx.globalAlpha=(1-enemy.stunTimer/1.25)*.12;ctx.fillStyle="#ffd27a";ctx.fillRect(0,0,w,h);ctx.globalAlpha=1;
-          }
-        }
         if(pointer.inside&&pointer.x!==null&&pointer.y!==null){
-          const valid=canPlaceTower(pointer.x,pointer.y),wind=state.buildType==="wind",water=state.buildType==="water",lightning=state.buildType==="lightning",melee=water||state.buildType==="knight"||state.buildType==="runner";
-          const color=valid?(lightning?"#fff078":water?"#65dcff":wind?"#8deaff":melee?"#ffad72":"#70e1bc"):"#ff7777";
-          const radius=lightning?240:water?100:wind?185:state.buildType==="runner"?210:state.buildType==="knight"?112:145;
+          const valid=canPlaceTower(pointer.x,pointer.y),wind=state.buildType==="wind",water=state.buildType==="water",lightning=state.buildType==="lightning",mage=state.buildType==="mage",melee=water||state.buildType==="knight"||state.buildType==="runner";
+          const color=valid?(lightning?"#fff078":mage?"#c69aff":water?"#65dcff":wind?"#8deaff":melee?"#ffad72":"#70e1bc"):"#ff7777";
+          const radius=lightning?240:mage?180:water?100:wind?185:state.buildType==="runner"?210:state.buildType==="knight"?112:145;
           ctx.fillStyle=color+"0d";ctx.beginPath();ctx.arc(pointer.x,pointer.y,radius,0,Math.PI*2);ctx.fill();
           ctx.strokeStyle=color+"88";ctx.lineWidth=2;ctx.setLineDash([5,6]);ctx.beginPath();ctx.arc(pointer.x,pointer.y,24,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
           ctx.fillStyle=color;ctx.font="20px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(valid?"＋":"×",pointer.x,pointer.y);
@@ -320,30 +327,48 @@
         ctx.font="30px sans-serif";ctx.fillText("🏰",850,214);ctx.font="12px sans-serif";ctx.fillStyle="#fff";ctx.fillText("ปราสาท",850,292);
         ctx.font="23px sans-serif";ctx.fillText("🚩",17,89);
         for(const tower of state.towers){
-          const knight=tower.type==="knight",runner=tower.type==="runner",wind=tower.type==="wind",water=tower.type==="water",lightning=tower.type==="lightning",accent=lightning?"#fff078":water?"#65dcff":wind?"#8deaff":runner||knight?"#ffad72":"#9beeff",drawX=tower.drawX,drawY=tower.drawY;
-          if(tower.id===state.selected){ctx.fillStyle=lightning?"#fff07812":water?"#65dcff12":wind?"#8deaff12":runner||knight?"#ffad7212":"#70e1bc13";ctx.beginPath();ctx.arc(tower.x,tower.y,tower.range,0,Math.PI*2);ctx.fill();ctx.strokeStyle=lightning?"#fff07844":water?"#65dcff44":wind?"#8deaff44":runner||knight?"#ffad7244":"#70e1bc38";ctx.lineWidth=1;ctx.stroke()}
+          const knight=tower.type==="knight",runner=tower.type==="runner",wind=tower.type==="wind",water=tower.type==="water",lightning=tower.type==="lightning",mage=tower.type==="mage",accent=lightning?"#fff078":mage?"#c69aff":water?"#65dcff":wind?"#8deaff":runner||knight?"#ffad72":"#9beeff",drawX=tower.drawX,drawY=tower.drawY;
+          if(tower.id===state.selected){ctx.fillStyle=lightning?"#fff07812":mage?"#c69aff12":water?"#65dcff12":wind?"#8deaff12":runner||knight?"#ffad7212":"#70e1bc13";ctx.beginPath();ctx.arc(tower.x,tower.y,tower.range,0,Math.PI*2);ctx.fill();ctx.strokeStyle=lightning?"#fff07844":mage?"#c69aff55":water?"#65dcff44":wind?"#8deaff44":runner||knight?"#ffad7244":"#70e1bc38";ctx.lineWidth=1;ctx.stroke()}
           if(runner&&tower.dash){ctx.strokeStyle="#ffad7277";ctx.lineWidth=3;ctx.setLineDash([5,6]);ctx.beginPath();ctx.moveTo(tower.x,tower.y);ctx.lineTo(drawX,drawY);ctx.stroke();ctx.setLineDash([])}
+          if(mage){
+            const rotation=performance.now()*.00016;
+            ctx.save();ctx.globalAlpha=tower.cooldown>0?.35:.7;ctx.strokeStyle="#d7b0ff";ctx.shadowColor="#b875ff";ctx.shadowBlur=12;ctx.lineWidth=1.5;
+            ctx.beginPath();ctx.arc(drawX,drawY+7,29,rotation,rotation+Math.PI*1.68);ctx.stroke();
+            ctx.strokeStyle="#ffe6a0";ctx.beginPath();ctx.arc(drawX,drawY+7,24,-rotation*1.3,-rotation*1.3+Math.PI*1.45);ctx.stroke();
+            for(let mark=0;mark<4;mark++){
+              const angle=rotation+mark*Math.PI/2;
+              ctx.fillStyle=mark%2?"#ffe6a0":"#d7b0ff";ctx.beginPath();ctx.arc(drawX+Math.cos(angle)*29,drawY+7+Math.sin(angle)*29,2,0,Math.PI*2);ctx.fill();
+            }
+            ctx.restore();
+          }
           ctx.fillStyle="#10192377";ctx.beginPath();ctx.ellipse(drawX,drawY+15,23,9,0,0,Math.PI*2);ctx.fill();
-          const base=ctx.createRadialGradient(drawX-7,drawY-8,2,drawX,drawY,26);base.addColorStop(0,lightning?"#fffbd2":water?"#e0faff":wind?"#e1fcff":runner||knight?"#ffe3bd":"#ecffff");base.addColorStop(.5,lightning?"#d6bc42":water?"#36a8d2":wind?"#68bfd0":runner||knight?"#d58957":"#5595ad");base.addColorStop(1,lightning?"#67531c":water?"#205879":wind?"#315e7b":runner||knight?"#784b3e":"#314d72");
+          const base=ctx.createRadialGradient(drawX-7,drawY-8,2,drawX,drawY,26);base.addColorStop(0,lightning?"#fffbd2":mage?"#f3e7ff":water?"#e0faff":wind?"#e1fcff":runner||knight?"#ffe3bd":"#ecffff");base.addColorStop(.5,lightning?"#d6bc42":mage?"#9a71cb":water?"#36a8d2":wind?"#68bfd0":runner||knight?"#d58957":"#5595ad");base.addColorStop(1,lightning?"#67531c":mage?"#4f3474":water?"#205879":wind?"#315e7b":runner||knight?"#784b3e":"#314d72");
           ctx.fillStyle=base;ctx.beginPath();ctx.arc(drawX,drawY,22,0,Math.PI*2);ctx.fill();
           ctx.strokeStyle=tower.stunned>0?"#ffd27a":tower.id===state.selected?"#fff0bd":accent;ctx.lineWidth=tower.stunned>0||tower.id===state.selected?3:2;ctx.stroke();
           ctx.save();ctx.translate(drawX,drawY);ctx.rotate(tower.attackAnim?-.35:0);
-          ctx.font="25px sans-serif";ctx.fillStyle="#fff";ctx.fillText(lightning?"⚡":water?"🥊":wind?"🌪️":runner?"🏃":knight?"🗡️":"🧙",0,1);ctx.restore();
+          ctx.font="25px sans-serif";ctx.fillStyle="#fff";ctx.fillText(lightning?"⚡":mage?"🧙":water?"🥊":wind?"🌪️":runner?"🏃":knight?"🗡️":"🧙",0,1);ctx.restore();
           ctx.fillStyle="#172236";ctx.beginPath();ctx.arc(drawX+16,drawY-17,9,0,Math.PI*2);ctx.fill();
           ctx.font="bold 10px sans-serif";ctx.fillStyle="#fff";ctx.fillText(tower.level,drawX+16,drawY-17);
           if(tower.stunned>0){ctx.font="17px sans-serif";ctx.fillText("💫",drawX,drawY-31)}
-          if(tower.attackAnim>0){ctx.strokeStyle=lightning?"#fff078":water?"#9cecff":wind?"#baf5ff":runner||knight?"#fff0b8":"#9beeff";ctx.globalAlpha=tower.attackAnim/.28;ctx.lineWidth=3;ctx.beginPath();ctx.arc(drawX,drawY,28+tower.attackAnim*28,runner?-1.5:knight||water?-.9:-2.7,runner?1.5:knight||water?1.3:-1.1);ctx.stroke();ctx.globalAlpha=1}
+          if(tower.attackAnim>0){ctx.strokeStyle=lightning?"#fff078":mage?"#e4c6ff":water?"#9cecff":wind?"#baf5ff":runner||knight?"#fff0b8":"#9beeff";ctx.globalAlpha=tower.attackAnim/.28;ctx.lineWidth=3;ctx.beginPath();ctx.arc(drawX,drawY,28+tower.attackAnim*28,runner?-1.5:knight||water?-.9:-2.7,runner?1.5:knight||water?1.3:-1.1);ctx.stroke();ctx.globalAlpha=1}
         }
         for(const enemy of state.enemies){
           if(enemy.fast){ctx.strokeStyle="#bbf5ff99";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(enemy.x-23,enemy.y-4);ctx.lineTo(enemy.x-11,enemy.y-4);ctx.moveTo(enemy.x-20,enemy.y+3);ctx.lineTo(enemy.x-9,enemy.y+3);ctx.stroke()}
-          ctx.font=enemy.dragon?"36px sans-serif":"23px sans-serif";ctx.fillText(enemy.dragon?"🐉":enemy.fast?"🐇":"👾",enemy.x,enemy.y);
-          const bw=enemy.boss?58:42,bh=enemy.boss?7:6,bx=enemy.x-bw/2,by=enemy.y-enemy.radius-9;
-          ctx.textBaseline="bottom";ctx.font=enemy.boss?"bold 11px Kanit, sans-serif":"bold 10px Kanit, sans-serif";
-          ctx.fillStyle="#fff";ctx.shadowColor="#142018";ctx.shadowBlur=4;
-          ctx.fillText(`${Math.max(0,Math.ceil(enemy.hp))}/${Math.ceil(enemy.maxHp)}`,enemy.x,by-2);ctx.shadowBlur=0;ctx.textBaseline="middle";
-          ctx.fillStyle="#17211e";roundedRect(bx,by,bw,bh,4);ctx.fill();
-          ctx.fillStyle=enemy.boss?"#ff737e":enemy.fast?"#93eaff":"#83e3a1";roundedRect(bx,by,bw*Math.max(0,enemy.hp/enemy.maxHp),bh,4);ctx.fill();
-          ctx.strokeStyle="#ffffffaa";ctx.lineWidth=1;roundedRect(bx,by,bw,bh,4);ctx.stroke();
+          if(enemy.dragon){
+            const aura=ctx.createRadialGradient(enemy.x,enemy.y,7,enemy.x,enemy.y,44);
+            aura.addColorStop(0,"#ff8a4d55");aura.addColorStop(1,"#ff4d2810");
+            ctx.fillStyle=aura;ctx.beginPath();ctx.arc(enemy.x,enemy.y,44,0,Math.PI*2);ctx.fill();
+            ctx.shadowColor="#ff673e";ctx.shadowBlur=22;ctx.font="47px sans-serif";ctx.fillText("🐉",enemy.x,enemy.y);ctx.shadowBlur=0;
+          }else{ctx.font="23px sans-serif";ctx.fillText(enemy.fast?"🐇":"👾",enemy.x,enemy.y)}
+          const bw=enemy.dragon?76:42,bh=enemy.dragon?9:6,bx=enemy.x-bw/2,by=enemy.y-enemy.radius-(enemy.dragon?29:9);
+          ctx.textBaseline="bottom";ctx.font=enemy.dragon?"bold 12px Kanit, sans-serif":"bold 10px Kanit, sans-serif";
+          ctx.fillStyle=enemy.dragon?"#ffd3a0":"#fff";ctx.shadowColor=enemy.dragon?"#b72d29":"#142018";ctx.shadowBlur=5;
+          ctx.fillText(enemy.dragon?`🐉 มังกร · ${Math.max(0,Math.ceil(enemy.hp))}/750`:`${Math.max(0,Math.ceil(enemy.hp))}/${Math.ceil(enemy.maxHp)}`,enemy.x,by-3);ctx.shadowBlur=0;ctx.textBaseline="middle";
+          const health=ctx.createLinearGradient(bx,by,bx+bw,by);
+          health.addColorStop(0,enemy.dragon?"#ff554f":"#83e3a1");health.addColorStop(1,enemy.dragon?"#ffc265":"#a6f2b1");
+          ctx.fillStyle="#17211e";roundedRect(bx,by,bw,bh,5);ctx.fill();
+          ctx.fillStyle=health;roundedRect(bx,by,bw*Math.max(0,enemy.hp/enemy.maxHp),bh,5);ctx.fill();
+          ctx.strokeStyle=enemy.dragon?"#ffe0aa":"#ffffffaa";ctx.lineWidth=1.5;roundedRect(bx,by,bw,bh,5);ctx.stroke();
         }
         for(const effect of state.effects){
           const progress=1-effect.life/effect.duration;ctx.save();
@@ -367,6 +392,28 @@
               ctx.lineTo(effect.x+dx*t-dy/Math.max(1,Math.hypot(dx,dy))*offset,effect.y+dy*t+dx/Math.max(1,Math.hypot(dx,dy))*offset);
             }
             ctx.lineTo(effect.target.x,effect.target.y);ctx.stroke();
+          }else if(effect.type==="arcane-blast"){
+            const radius=effect.radius*(.35+progress*.75),alpha=Math.sin(progress*Math.PI);
+            ctx.globalAlpha=alpha*.2;
+            const glow=ctx.createRadialGradient(effect.x,effect.y,2,effect.x,effect.y,radius);
+            glow.addColorStop(0,"#efe0ff");glow.addColorStop(.55,"#a96cff");glow.addColorStop(1,"#4c1e9b00");
+            ctx.fillStyle=glow;ctx.beginPath();ctx.arc(effect.x,effect.y,radius,0,Math.PI*2);ctx.fill();
+            ctx.globalAlpha=alpha;ctx.shadowColor="#c59aff";ctx.shadowBlur=28;ctx.lineWidth=5;ctx.strokeStyle="#ead7ff";
+            ctx.beginPath();ctx.arc(effect.x,effect.y,radius,0,Math.PI*2);ctx.stroke();
+            ctx.lineWidth=2;ctx.strokeStyle="#ffd56f";ctx.beginPath();ctx.arc(effect.x,effect.y,radius*.72,-progress*4,Math.PI*2-progress*4);ctx.stroke();
+            for(let rune=0;rune<8;rune++){
+              const angle=rune*Math.PI/4-progress*2.5,rx=effect.x+Math.cos(angle)*radius*.86,ry=effect.y+Math.sin(angle)*radius*.86;
+              ctx.save();ctx.translate(rx,ry);ctx.rotate(angle);ctx.font="bold 15px sans-serif";ctx.fillStyle="#fff0a8";ctx.fillText(rune%2?"✦":"ᛟ",0,0);ctx.restore();
+            }
+          }else if(effect.type==="dragon-roar"){
+            const reach=effect.radius*progress;
+            ctx.globalAlpha=(1-progress)*.24;ctx.fillStyle="#ff553b";ctx.fillRect(0,0,w,h);
+            ctx.globalAlpha=1-progress;ctx.shadowColor="#ff6c43";ctx.shadowBlur=24;
+            for(let ring=0;ring<4;ring++){
+              const radius=Math.max(2,reach-ring*22);
+              ctx.strokeStyle=ring%2?"#ffd27a":"#ff7654";ctx.lineWidth=5-ring*.6;
+              ctx.beginPath();ctx.arc(effect.x,effect.y,radius,0,Math.PI*2);ctx.stroke();
+            }
           }else if(effect.type==="stun-pulse"){
             ctx.globalAlpha=effect.life/effect.duration;ctx.strokeStyle="#ffd27a";ctx.lineWidth=5;ctx.shadowColor="#ffbd59";ctx.shadowBlur=22;ctx.beginPath();ctx.arc(effect.x,effect.y,progress*effect.radius,0,Math.PI*2);ctx.stroke();
           }else if(effect.type==="spark"){
