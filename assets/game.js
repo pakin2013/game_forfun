@@ -67,10 +67,11 @@
         const tower=state.towers.find(t=>t.id===state.selected);
         const value=document.getElementById("cooldown-value"),fill=document.getElementById("cooldown-fill");
         if(!tower||!value||!fill)return;
-        if(tower.dash?.phase==="out")value.textContent="กำลังพุ่งชน!";
+        if(tower.stunned>0)value.textContent=`ถูกมังกรสตัน ${tower.stunned.toFixed(1)} วิ`;
+        else if(tower.dash?.phase==="out")value.textContent="กำลังพุ่งชน!";
         else if(tower.cooldown>0)value.textContent=`เหลือ ${tower.cooldown.toFixed(1)} วิ`;
         else value.textContent="พร้อมโจมตี";
-        fill.style.transform=`scaleX(${tower.dash?.phase==="out"?1:Math.max(0,1-tower.cooldown/tower.rate)})`;
+        fill.style.transform=`scaleX(${tower.stunned>0?0:tower.dash?.phase==="out"?1:Math.max(0,1-tower.cooldown/tower.rate)})`;
       }
       function updateAutomationNote(){
         if(!state.autoWave){autoWaveNote.textContent="เริ่มคลื่นด้วยตนเอง";return}
@@ -82,7 +83,7 @@
         const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",cost=isWind?120:isRunner?110:isKnight?125:100;
         if(state.gold<cost){notify(`เหรียญไม่พอ! ต้องใช้ ${cost} เหรียญ`);return}
         state.gold-=cost;
-        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isWind?18:isRunner?42:isKnight?31:22,range:isWind?185:isRunner?210:isKnight?112:145,rate:isWind?.5:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null};
+        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isWind?18:isRunner?42:isKnight?31:22,range:isWind?185:isRunner?210:isKnight?112:145,rate:isWind?1:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
         state.towers.push(tower);state.selected=tower.id;notify(isWind?"เรียกวิญญาณลมสำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
       }
       function sellTower(){
@@ -126,7 +127,7 @@
         const fast=!boss&&state.spawnLeft>0&&state.spawnLeft%4===0;
         const hp=(34+state.wave*13)*(boss?5:fast?0.72:1);
         const baseSpeed=48+Math.min(24,state.wave*1.5);
-        state.enemies.push({x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:boss?37:fast?baseSpeed*2.15:baseSpeed,progress:0,boss,fast,radius:boss?17:fast?11:12});
+        state.enemies.push({x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:boss?37:fast?baseSpeed*2.15:baseSpeed,progress:0,boss,dragon:boss,stunTimer:5,fast,radius:boss?17:fast?11:12});
       }
       function knockbackEnemy(enemy,distance){
         let remaining=distance;
@@ -168,12 +169,26 @@
             if(distance<=remaining){enemy.x=next.x;enemy.y=next.y;remaining-=distance;enemy.progress++}
             else{enemy.x+=dx/distance*remaining;enemy.y+=dy/distance*remaining;remaining=0}
           }
+          if(enemy.dragon){
+            enemy.stunTimer-=dt;
+            if(enemy.stunTimer<=0){
+              enemy.stunTimer=5;
+              state.effects.push({type:"stun-pulse",x:enemy.x,y:enemy.y,radius:155,duration:.7,life:.7});
+              for(const tower of state.towers){
+                if(Math.hypot(tower.x-enemy.x,tower.y-enemy.y)>155)continue;
+                tower.stunned=Math.max(tower.stunned,1.25);
+                state.effects.push({type:"text",x:tower.x,y:tower.y-31,text:"สตัน!",duration:.8,life:.8,color:"#ffd27a"});
+              }
+            }
+          }
         }
         const escaped=state.enemies.filter(e=>e.progress>=path.length-1);
         if(escaped.length){state.enemies=state.enemies.filter(e=>e.progress<path.length-1);state.lives=Math.max(0,state.lives-escaped.length)}
         for(const tower of state.towers){
           tower.attackAnim=Math.max(0,tower.attackAnim-dt);
           tower.cooldown=Math.max(0,tower.cooldown-dt);
+          tower.stunned=Math.max(0,tower.stunned-dt);
+          if(tower.stunned>0)continue;
           if(tower.dash){
             const dash=tower.dash;
             if(dash.phase==="out"&&state.enemies.includes(dash.target)){
@@ -290,19 +305,23 @@
           ctx.fillStyle="#10192377";ctx.beginPath();ctx.ellipse(drawX,drawY+15,23,9,0,0,Math.PI*2);ctx.fill();
           const base=ctx.createRadialGradient(drawX-7,drawY-8,2,drawX,drawY,26);base.addColorStop(0,wind?"#e1fcff":runner||knight?"#ffe3bd":"#ecffff");base.addColorStop(.5,wind?"#68bfd0":runner||knight?"#d58957":"#5595ad");base.addColorStop(1,wind?"#315e7b":runner||knight?"#784b3e":"#314d72");
           ctx.fillStyle=base;ctx.beginPath();ctx.arc(drawX,drawY,22,0,Math.PI*2);ctx.fill();
-          ctx.strokeStyle=tower.id===state.selected?"#fff0bd":accent;ctx.lineWidth=tower.id===state.selected?3:2;ctx.stroke();
+          ctx.strokeStyle=tower.stunned>0?"#ffd27a":tower.id===state.selected?"#fff0bd":accent;ctx.lineWidth=tower.stunned>0||tower.id===state.selected?3:2;ctx.stroke();
           ctx.save();ctx.translate(drawX,drawY);ctx.rotate(tower.attackAnim?-.35:0);
           ctx.font="25px sans-serif";ctx.fillStyle="#fff";ctx.fillText(wind?"🌪️":runner?"🏃":knight?"🗡️":"🧙",0,1);ctx.restore();
           ctx.fillStyle="#172236";ctx.beginPath();ctx.arc(drawX+16,drawY-17,9,0,Math.PI*2);ctx.fill();
           ctx.font="bold 10px sans-serif";ctx.fillStyle="#fff";ctx.fillText(tower.level,drawX+16,drawY-17);
+          if(tower.stunned>0){ctx.font="17px sans-serif";ctx.fillText("💫",drawX,drawY-31)}
           if(tower.attackAnim>0){ctx.strokeStyle=wind?"#baf5ff":runner||knight?"#fff0b8":"#9beeff";ctx.globalAlpha=tower.attackAnim/.28;ctx.lineWidth=3;ctx.beginPath();ctx.arc(drawX,drawY,28+tower.attackAnim*28,runner?-1.5:knight?-.9:-2.7,runner?1.5:knight?1.3:-1.1);ctx.stroke();ctx.globalAlpha=1}
         }
         for(const enemy of state.enemies){
           if(enemy.fast){ctx.strokeStyle="#bbf5ff99";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(enemy.x-23,enemy.y-4);ctx.lineTo(enemy.x-11,enemy.y-4);ctx.moveTo(enemy.x-20,enemy.y+3);ctx.lineTo(enemy.x-9,enemy.y+3);ctx.stroke()}
-          ctx.font=enemy.boss?"30px sans-serif":"23px sans-serif";ctx.fillText(enemy.boss?"👹":enemy.fast?"🐇":"👾",enemy.x,enemy.y);
-          const bw=enemy.boss?38:29,bh=4,bx=enemy.x-bw/2,by=enemy.y-enemy.radius-9;
+          ctx.font=enemy.dragon?"36px sans-serif":"23px sans-serif";ctx.fillText(enemy.dragon?"🐉":enemy.fast?"🐇":"👾",enemy.x,enemy.y);
+          const bw=enemy.boss?54:29,bh=enemy.boss?6:4,bx=enemy.x-bw/2,by=enemy.y-enemy.radius-9;
           ctx.fillStyle="#311d26";roundedRect(bx,by,bw,bh,3);ctx.fill();
           ctx.fillStyle=enemy.boss?"#f88383":enemy.fast?"#93eaff":"#83e3a1";roundedRect(bx,by,bw*Math.max(0,enemy.hp/enemy.maxHp),bh,3);ctx.fill();
+          if(enemy.dragon&&enemy.stunTimer<1.25){
+            ctx.globalAlpha=(1-enemy.stunTimer/1.25)*.22;ctx.fillStyle="#ffd27a";ctx.beginPath();ctx.arc(enemy.x,enemy.y,155,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+          }
         }
         for(const effect of state.effects){
           const progress=1-effect.life/effect.duration;ctx.save();
@@ -316,6 +335,8 @@
           }else if(effect.type==="gust"){
             ctx.globalAlpha=effect.life/effect.duration;ctx.strokeStyle="#a9efff";ctx.lineWidth=4;ctx.shadowColor="#71ddff";ctx.shadowBlur=19;
             for(let ring=0;ring<3;ring++){ctx.beginPath();ctx.arc(effect.x,effect.y,10+progress*44+ring*8,progress*4+ring*2,progress*4+ring*2+Math.PI*1.25);ctx.stroke()}
+          }else if(effect.type==="stun-pulse"){
+            ctx.globalAlpha=effect.life/effect.duration;ctx.strokeStyle="#ffd27a";ctx.lineWidth=5;ctx.shadowColor="#ffbd59";ctx.shadowBlur=22;ctx.beginPath();ctx.arc(effect.x,effect.y,progress*effect.radius,0,Math.PI*2);ctx.stroke();
           }else if(effect.type==="spark"){
             ctx.globalAlpha=effect.life/effect.duration;ctx.fillStyle=effect.color;ctx.shadowColor=effect.color;ctx.shadowBlur=9;ctx.beginPath();ctx.arc(effect.x,effect.y,2+effect.life/effect.duration*2,0,Math.PI*2);ctx.fill();
           }else if(effect.type==="text"){
