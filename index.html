@@ -55,6 +55,13 @@
     .cooldown-track{height:4px;margin-top:6px;border-radius:9px;background:#ffffff12;overflow:hidden}
     .cooldown-fill{height:100%;width:100%;transform-origin:left center;background:linear-gradient(90deg,#70e1bc,#b8f3d5);transition:transform .08s linear}
     .upgrade-next{margin:7px 0 0;color:var(--muted);font-size:10px;text-align:center}
+    .hero-actions{display:grid;grid-template-columns:1fr 1.25fr;gap:8px;margin-top:9px}
+    .danger{background:linear-gradient(135deg,#733e48,#522e3b);color:#ffe1df;border:1px solid #ff9e9733}
+    .setting-row{display:flex;align-items:center;gap:9px;margin:9px 0;color:#e8eef7;font-size:12px;cursor:pointer}
+    .setting-row input{width:16px;height:16px;margin:0;accent-color:#70e1bc}
+    .setting-delay{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:11px;margin:10px 0 0 25px}
+    .setting-delay input{width:66px;padding:6px 7px;border:1px solid #ffffff20;border-radius:8px;background:#101b2b;color:var(--ink);font:inherit;text-align:center}
+    .setting-note{color:var(--muted);font-size:10px;line-height:1.5;margin:7px 0 0}
     .action{width:100%;border:0;border-radius:11px;padding:10px 12px;font-weight:600;font-size:13px;transition:transform .15s,filter .15s}
     .action:hover:not(:disabled){filter:brightness(1.09);transform:translateY(-1px)}
     .action:disabled{cursor:not-allowed;opacity:.45}
@@ -121,6 +128,14 @@
           <button class="action primary" id="wave-btn">เริ่มคลื่นที่ 1　▶</button>
           <p class="wave-note" id="wave-note">เตรียมตัวให้พร้อมก่อนเริ่ม!</p>
         </section>
+        <section class="card">
+          <h2>⚙️ ตั้งค่าการเล่น</h2>
+          <label class="setting-row"><input id="auto-wave" type="checkbox"><span>เริ่มคลื่นถัดไปอัตโนมัติ</span></label>
+          <label class="setting-delay" for="auto-wave-delay"><span>หน่วงก่อนเริ่มคลื่น</span><span><input id="auto-wave-delay" type="number" min="3" max="60" step="1" value="8"> วิ</span></label>
+          <p class="setting-note" id="auto-wave-note">เริ่มคลื่นด้วยตนเอง</p>
+          <label class="setting-row"><input id="auto-upgrade" type="checkbox"><span>อัปเกรดฮีโร่อัตโนมัติ</span></label>
+          <p class="setting-note">ใช้เหรียญอัปเกรดฮีโร่ที่ยังไม่เต็มโดยอัตโนมัติเมื่อมีเงินพอ</p>
+        </section>
         <div class="controls">
           <button class="action secondary" id="pause-btn">⏸ หยุดเกม</button>
           <button class="action secondary" id="speed-btn">⏩ เร่งความเร็ว</button>
@@ -146,6 +161,10 @@
       const buildNote = document.getElementById("build-note");
       const pauseBtn = document.getElementById("pause-btn");
       const speedBtn = document.getElementById("speed-btn");
+      const autoWaveInput = document.getElementById("auto-wave");
+      const autoWaveDelayInput = document.getElementById("auto-wave-delay");
+      const autoWaveNote = document.getElementById("auto-wave-note");
+      const autoUpgradeInput = document.getElementById("auto-upgrade");
       const toastEl = document.getElementById("toast");
       const path = [
         {x:-35,y:130},{x:145,y:130},{x:145,y:330},{x:325,y:330},
@@ -156,7 +175,7 @@
         {x:75,y:235},{x:220,y:95},{x:235,y:415},{x:410,y:270},
         {x:410,y:100},{x:585,y:105},{x:585,y:465},{x:765,y:155},{x:770,y:345}
       ];
-      const state = {gold:180,lives:20,wave:0,enemies:[],towers:[],shots:[],effects:[],selected:null,buildType:"mage",active:false,paused:false,speed:1,spawnLeft:0,spawnTimer:0,lastTime:0,over:false};
+      const state = {gold:180,lives:20,wave:0,enemies:[],towers:[],shots:[],effects:[],selected:null,buildType:"mage",active:false,paused:false,speed:1,spawnLeft:0,spawnTimer:0,lastTime:0,over:false,autoWave:false,autoWaveDelay:8,autoWaveTimer:0,autoUpgrade:false};
       let toastTimer;
 
       function notify(message){
@@ -170,6 +189,7 @@
         waveBtn.textContent=state.active?"กำลังต่อสู้…　⚔":`เริ่มคลื่นที่ ${state.wave+1}　▶`;
         waveNote.textContent=state.active?`เหลือศัตรูอีก ${state.spawnLeft} ตัว`:(state.wave?"คลื่นถัดไปแข็งแกร่งขึ้น!":"เตรียมตัวให้พร้อมก่อนเริ่ม!");
         pauseBtn.textContent=state.paused?"▶ เล่นต่อ":"⏸ หยุดเกม";
+        autoWaveInput.checked=state.autoWave;autoWaveDelayInput.value=state.autoWaveDelay;autoUpgradeInput.checked=state.autoUpgrade;
         document.querySelectorAll(".hero-choice").forEach(button=>button.classList.toggle("active",button.dataset.hero===state.buildType));
         const buildName=state.buildType==="knight"?"นักดาบ":state.buildType==="runner"?"นักวิ่ง":"จอมเวท";
         buildNote.textContent=`เลือกช่องสีเขียวเพื่อวาง${buildName}`;
@@ -189,10 +209,12 @@
           <div class="wallet"><span>🪙 เหรียญที่มี</span><strong id="upgrade-wallet">${state.gold.toLocaleString("th-TH")}</strong></div>
           <div class="cooldown-readout"><span>คูลดาวน์โจมตี · ${tower.rate.toFixed(2)} วินาที</span><strong id="cooldown-value">พร้อมโจมตี</strong></div>
           <div class="cooldown-track"><div class="cooldown-fill" id="cooldown-fill"></div></div>
-          <button class="action primary" id="upgrade-btn" ${tower.level>=5||state.gold<cost?"disabled":""}>⬆️ อัปเกรด <span class="upgrade-cost">${tower.level>=5?"เต็มแล้ว":`🪙 ${cost}`}</span></button>
+          <div class="hero-actions"><button class="action primary" id="upgrade-btn" ${tower.level>=5||state.gold<cost?"disabled":""}>⬆️ อัปเกรด <span class="upgrade-cost">${tower.level>=5?"เต็มแล้ว":`🪙 ${cost}`}</span></button><button class="action danger" id="sell-btn">🗑️ ลบ · คืน 🪙 ${Math.floor(tower.invested*.7)}</button></div>
+          <p class="upgrade-next">ลบฮีโร่แล้วรับคืน 70% ของต้นทุนวางและอัปเกรด</p>
           ${tower.level<5?`<p class="upgrade-next">อัปเกรดถัดไป: พลังโจมตี +${isRunner?20:isKnight?18:13}${isKnight?" · โอกาสคริติคอล +5%":""}${isRunner?" · คูลดาวน์ลดลง":""}</p>`:""}`;
         const button=document.getElementById("upgrade-btn");
-        if(button)button.addEventListener("click",upgradeTower);
+        if(button)button.addEventListener("click",()=>upgradeTower());
+        document.getElementById("sell-btn").addEventListener("click",sellTower);
       }
       function upgradeCost(tower){return 70+tower.level*55}
       function updateCooldownDisplay(){
@@ -204,26 +226,52 @@
         else value.textContent="พร้อมโจมตี";
         fill.style.transform=`scaleX(${tower.dash?.phase==="out"?1:Math.max(0,1-tower.cooldown/tower.rate)})`;
       }
+      function updateAutomationNote(){
+        if(!state.autoWave){autoWaveNote.textContent="เริ่มคลื่นด้วยตนเอง";return}
+        if(state.wave===0){autoWaveNote.textContent="เริ่มคลื่นแรกด้วยตนเองก่อน ระบบจะเริ่มคลื่นถัดไปให้อัตโนมัติ";return}
+        if(state.active){autoWaveNote.textContent="จะเริ่มนับเวลาหลังจบคลื่นนี้";return}
+        autoWaveNote.textContent=`คลื่นถัดไปจะเริ่มใน ${state.autoWaveTimer.toFixed(1)} วินาที`;
+      }
       function addTower(pad){
         const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",cost=isRunner?110:isKnight?125:100;
         if(state.gold<cost){notify(`เหรียญไม่พอ! ต้องใช้ ${cost} เหรียญ`);return}
         state.gold-=cost;
-        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,damage:isRunner?42:isKnight?31:22,range:isRunner?210:isKnight?112:145,rate:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,attackAnim:0,dash:null};
+        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isRunner?42:isKnight?31:22,range:isRunner?210:isKnight?112:145,rate:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,attackAnim:0,dash:null};
         state.towers.push(tower);state.selected=tower.id;notify(isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
       }
-      function upgradeTower(){
-        const tower=state.towers.find(t=>t.id===state.selected);if(!tower||tower.level>=5)return;
+      function sellTower(){
+        const tower=state.towers.find(t=>t.id===state.selected);if(!tower)return;
+        const refund=Math.floor(tower.invested*.7);
+        state.towers=state.towers.filter(item=>item.id!==tower.id);state.gold+=refund;state.selected=null;
+        const upgraded=autoUpgradeTowers();
+        notify(`ลบฮีโร่แล้ว รับคืน ${refund} เหรียญ${upgraded?` · อัปเกรดอัตโนมัติ ${upgraded} ครั้ง`:""}`);updateHud();
+      }
+      function upgradeTower(tower=state.towers.find(t=>t.id===state.selected),notifyUser=true,refresh=true){
+        if(!tower||tower.level>=5)return false;
         const cost=upgradeCost(tower);
-        if(state.gold<cost){notify("เหรียญไม่พอสำหรับการอัปเกรด");return}
-        state.gold-=cost;tower.level++;
+        if(state.gold<cost){if(notifyUser)notify("เหรียญไม่พอสำหรับการอัปเกรด");return false}
+        state.gold-=cost;tower.invested+=cost;tower.level++;
         if(tower.type==="knight"){tower.damage+=18;tower.range+=5;tower.rate=Math.max(.36,tower.rate-.055);tower.critChance=Math.min(.5,tower.critChance+.05)}
         else if(tower.type==="runner"){tower.damage+=20;tower.range+=12;tower.rate=Math.max(.6,tower.rate-.1)}
         else{tower.damage+=13;tower.range+=12;tower.rate=Math.max(.36,tower.rate-.08)}
-        notify(`อัปเกรดฮีโร่เป็นระดับ ${tower.level} แล้ว!`);updateHud();
+        if(notifyUser)notify(`อัปเกรดฮีโร่เป็นระดับ ${tower.level} แล้ว!`);
+        if(refresh)updateHud();
+        return true;
+      }
+      function autoUpgradeTowers(){
+        if(!state.autoUpgrade)return 0;
+        let upgraded=0;
+        while(true){
+          const tower=state.towers.filter(item=>item.level<5&&state.gold>=upgradeCost(item)).sort((a,b)=>a.level-b.level||a.id-b.id)[0];
+          if(!tower||!upgradeTower(tower,false,false))break;
+          upgraded++;
+        }
+        if(upgraded)updateHud();
+        return upgraded;
       }
       function startWave(){
         if(state.active||state.over)return;
-        state.wave++;state.active=true;state.spawnLeft=6+state.wave*2;state.spawnTimer=.35;
+        state.wave++;state.active=true;state.autoWaveTimer=0;state.spawnLeft=6+state.wave*2;state.spawnTimer=.35;
         notify(`คลื่นที่ ${state.wave} กำลังมา!`);updateHud();
       }
       function spawnEnemy(){
@@ -234,6 +282,10 @@
       function update(dt){
         if(state.paused||state.over)return;
         dt*=state.speed;
+        if(state.autoWave&&state.wave>0&&!state.active){
+          state.autoWaveTimer=Math.max(0,state.autoWaveTimer-dt);
+          if(state.autoWaveTimer===0)startWave();
+        }
         if(state.active){
           state.spawnTimer-=dt;
           if(state.spawnLeft>0&&state.spawnTimer<=0){spawnEnemy();state.spawnLeft--;state.spawnTimer=Math.max(.42,.92-state.wave*.018)}
@@ -305,10 +357,15 @@
         if(defeated.length){
           state.gold+=defeated.reduce((total,e)=>total+(e.boss?36:12),0);state.enemies=state.enemies.filter(e=>e.hp>0);
           for(const enemy of defeated){state.effects.push({type:"coin",x:enemy.x,y:enemy.y,duration:.7,life:.7});for(let i=0;i<7;i++)state.effects.push({type:"spark",x:enemy.x,y:enemy.y,vx:(Math.random()-.5)*125,vy:(Math.random()-.5)*125,duration:.32,life:.32,color:"#a8f2ba"})}
+          const upgraded=autoUpgradeTowers();
+          if(upgraded)notify(`อัปเกรดอัตโนมัติ ${upgraded} ครั้ง`);
           updateHud();
         }
         if(state.active&&state.spawnLeft===0&&state.enemies.length===0){
-          state.active=false;const reward=35+state.wave*5;state.gold+=reward;notify(`ผ่านคลื่นที่ ${state.wave}! รับโบนัส ${reward} เหรียญ`);updateHud();
+          state.active=false;const reward=35+state.wave*5;state.gold+=reward;
+          const upgraded=autoUpgradeTowers();
+          state.autoWaveTimer=state.autoWave?state.autoWaveDelay:0;
+          notify(`ผ่านคลื่นที่ ${state.wave}! รับโบนัส ${reward} เหรียญ${upgraded?` · อัปเกรด ${upgraded} ครั้ง`:""}`);updateHud();
         }
         if(state.lives===0){state.over=true;document.getElementById("result-text").textContent=`ป้องกันได้ ${state.wave} คลื่น และกำจัดศัตรูไปแล้ว!`;document.getElementById("game-over").classList.add("show");updateHud()}
       }
@@ -402,12 +459,30 @@
       document.querySelectorAll(".hero-choice").forEach(button=>button.addEventListener("click",()=>{
         state.buildType=button.dataset.hero;updateHud();
       }));
+      autoWaveInput.addEventListener("change",()=>{
+        state.autoWave=autoWaveInput.checked;
+        state.autoWaveTimer=state.autoWave&&!state.active&&state.wave>0?state.autoWaveDelay:0;
+        updateHud();
+      });
+      autoWaveDelayInput.addEventListener("change",()=>{
+        const requested=Number.parseInt(autoWaveDelayInput.value,10);
+        state.autoWaveDelay=Number.isFinite(requested)?Math.max(3,Math.min(60,requested)):8;
+        if(state.autoWave&&!state.active&&state.wave>0)state.autoWaveTimer=state.autoWaveDelay;
+        updateHud();
+      });
+      autoUpgradeInput.addEventListener("change",()=>{
+        state.autoUpgrade=autoUpgradeInput.checked;
+        const upgraded=autoUpgradeTowers();
+        if(upgraded)notify(`อัปเกรดอัตโนมัติ ${upgraded} ครั้ง`);
+        else notify(state.autoUpgrade?"เปิดอัปเกรดอัตโนมัติแล้ว":"ปิดอัปเกรดอัตโนมัติแล้ว");
+        updateHud();
+      });
       pauseBtn.addEventListener("click",()=>{state.paused=!state.paused;updateHud()});
       speedBtn.addEventListener("click",()=>{state.speed=state.speed===1?1.7:1;speedBtn.textContent=state.speed===1?"⏩ เร่งความเร็ว":"▶ ความเร็วปกติ";notify(state.speed===1.7?"เร่งความเร็วเกมแล้ว":"กลับสู่ความเร็วปกติ")});
       document.getElementById("restart-btn").addEventListener("click",()=>location.reload());
       function frame(time){
         const dt=Math.min((time-state.lastTime)/1000||0,.05);state.lastTime=time;
-        update(dt);updateCooldownDisplay();draw();requestAnimationFrame(frame);
+        update(dt);updateCooldownDisplay();updateAutomationNote();draw();requestAnimationFrame(frame);
       }
       updateHud();requestAnimationFrame(frame);
     })();
