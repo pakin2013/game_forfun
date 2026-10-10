@@ -28,7 +28,7 @@
           <div class="board-heading"><span>🏰 สมรภูมิเอเวอร์กรีน</span><small>คลิกพื้นว่างเพื่อวางฮีโร่ได้อย่างอิสระ</small></div>
           <canvas id="game" width="900" height="520" aria-label="แผนที่เกมป้องกันป้อม"></canvas>
         </div>
-        <div class="legend"><span><i class="dot" style="background:#70e1bc"></i> ช่องวางฮีโร่</span><span><i class="dot" style="background:#edba70"></i> เส้นทางศัตรู</span><span>หลอดเลือดพร้อมตัวเลข HP</span><span>🧙 พลังเวท 20/0.75 วิ · วงแหวน 50/5 วิ</span><span>🗡️ ประชิด · คริติคอล</span><span>🥊 หมัดตรง 10/0.25 วิ · หมัดหนัก 20/1 วิ</span><span>⚡ สายฟ้าโจมตีพร้อมกัน 3 ตัว</span><span>🏃 พุ่งชน</span><span>🌪️ ผลักถอยหลัง · คูลดาวน์ 0.78 วิ</span><span>🦅 ขนนก 15 · บินชน 40</span><span>💣 ระเบิดสตันฮีโร่ใกล้เคียง 2.5 วิ</span><span>🐇 วิ่งเร็ว</span><span>🐉 มังกรเลือด 1000 · คำรามสตัน 2 วิ</span></div>
+        <div class="legend"><span><i class="dot" style="background:#70e1bc"></i> ช่องวางฮีโร่</span><span><i class="dot" style="background:#edba70"></i> เส้นทางศัตรู</span><span>ศัตรูเริ่ม 100 HP · เพิ่ม 100/คลื่น</span><span>หลอดเลือดพร้อมตัวเลข HP</span><span>🧙 พลังเวท 20/0.75 วิ · วงแหวน 50/5 วิ</span><span>🗡️ ประชิด · คริติคอล</span><span>🥊 หมัดตรง 10/0.25 วิ · หมัดหนัก 20/1 วิ</span><span>⚡ สายฟ้าโจมตีพร้อมกัน 3 ตัว</span><span>🏃 พุ่งชน</span><span>🌪️ ผลักถอยหลัง · คูลดาวน์ 0.78 วิ</span><span>🦅 ขนนก 15 · บินชน 40</span><span>💣 ระเบิดสตันฮีโร่ใกล้เคียง 2.5 วิ</span><span>🐇 วิ่งเร็ว</span><span>🐉 มังกรเริ่ม 2000 HP · เพิ่ม 1500/คลื่น</span></div>
       </div>
       <aside class="side">
         <section class="card selected">
@@ -72,6 +72,6 @@
   <div class="overlay" id="game-over">
     <div class="modal"><div class="modal-emoji">🏰</div><h2>ปราสาทถูกบุก!</h2><p id="result-text"></p><button class="action primary" id="restart-btn">เล่นอีกครั้ง ↻</button></div>
   </div>
-  <script src="assets/game.js" defer></script>
+  <script type="module" src="assets/game.js"></script>
 </body>
 </html>

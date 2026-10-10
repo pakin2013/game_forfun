@@ -1,0 +1,4 @@
+    @media(max-width:760px){.shell{padding:15px 12px}.game-layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}.selected{grid-row:span 2}.controls{margin-top:0}.hud{gap:6px}.stat{padding:8px;gap:6px;min-height:57px}.stat-value{font-size:17px}.stat-label{font-size:10px}.tag{display:none}}
+    @media(max-width:470px){.side{grid-template-columns:1fr}.selected{grid-row:auto}.controls{grid-row:auto}.subtitle{font-size:11px}.board-heading small{font-size:9px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    @media(max-width:470px){.board-heading{padding:0 10px}.board-heading small{padding:4px 6px}.hero-choice{min-height:78px}}
