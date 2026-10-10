@@ -117,3 +117,8 @@
     .modal{border-color:#e8ce8d66;background:radial-gradient(ellipse at 50% 0%,#594479,#1b2a3e 58%);box-shadow:0 24px 90px #000b,0 0 35px #bd8aff22}
     @keyframes crest-shine{0%,72%,100%{transform:translateX(0) rotate(25deg)}84%{transform:translateX(600%) rotate(25deg)}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    .hero-choice[data-hero="skybird"].active{border-color:#a9ecffcc;background:linear-gradient(145deg,#69d9ff2a,#3470a114);box-shadow:inset 0 0 22px #76dfff18,0 0 18px #76dfff20}
+    .bird-cooldowns{display:grid;gap:8px;margin:11px 0 7px}
+    .bird-cooldowns>div{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px 8px;color:var(--muted);font-size:11px}
+    .bird-cooldowns strong{color:#edf3fc;font-size:11px;font-weight:600}
+    .bird-cooldowns .cooldown-track{grid-column:1/-1;margin:0}
