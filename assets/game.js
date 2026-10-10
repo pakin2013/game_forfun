@@ -37,7 +37,7 @@
         pauseBtn.textContent=state.paused?"▶ เล่นต่อ":"⏸ หยุดเกม";
         autoWaveInput.checked=state.autoWave;autoWaveDelayInput.value=state.autoWaveDelay;autoUpgradeInput.checked=state.autoUpgrade;
         document.querySelectorAll(".hero-choice").forEach(button=>button.classList.toggle("active",button.dataset.hero===state.buildType));
-        const buildName=state.buildType==="water"?"หมัดสายน้ำ":state.buildType==="knight"?"นักดาบ":state.buildType==="runner"?"นักวิ่ง":state.buildType==="wind"?"วิญญาณลม":"จอมเวท";
+        const buildName=state.buildType==="lightning"?"ปืนสายฟ้า":state.buildType==="water"?"หมัดสายน้ำ":state.buildType==="knight"?"นักดาบ":state.buildType==="runner"?"นักวิ่ง":state.buildType==="wind"?"วิญญาณลม":"จอมเวท";
         buildNote.textContent=`เลือก ${buildName} แล้วคลิกพื้นว่างเพื่อวางได้อย่างอิสระ`;
         renderPanel();
       }
@@ -45,11 +45,11 @@
         const tower=state.towers.find(t=>t.id===state.selected);
         if(!tower){heroPanel.innerHTML='<p class="hint">เลือกฮีโร่แล้วคลิกพื้นว่างเพื่อวางได้อย่างอิสระ คลิกฮีโร่ที่วางแล้วเพื่อดูข้อมูลและอัปเกรด</p>';return}
         const cost=upgradeCost(tower);
-        const isKnight=tower.type==="knight",isRunner=tower.type==="runner",isWind=tower.type==="wind",isWater=tower.type==="water";
-        const heroName=isWater?"หมัดสายน้ำ":isWind?"วิญญาณลม":isRunner?"นักวิ่งพุ่งชน":isKnight?"นักดาบคริติคอล":"ผู้พิทักษ์เวทมนตร์";
-        const role=isWater?`ประชิด · โอกาสลดความเร็ว ${Math.round(tower.slowChance*100)}%`:isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
-        const stat2=isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isWater?`ระยะประชิด<b>${tower.range} · ลดความเร็ว 30% นาน 1.5 วิ</b>`:isKnight?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
-        const icon=isWater?"🥊":isWind?"🌪️":isRunner?"🏃":isKnight?"🗡️":"🧙";
+        const isKnight=tower.type==="knight",isRunner=tower.type==="runner",isWind=tower.type==="wind",isWater=tower.type==="water",isLightning=tower.type==="lightning";
+        const heroName=isLightning?"ปืนสายฟ้า":isWater?"หมัดสายน้ำ":isWind?"วิญญาณลม":isRunner?"นักวิ่งพุ่งชน":isKnight?"นักดาบคริติคอล":"ผู้พิทักษ์เวทมนตร์";
+        const role=isLightning?"ยิงสายฟ้าใส่ศัตรู 3 ตัว":isWater?"ประชิด":isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
+        const stat2=isLightning?`เป้าหมาย<b>3 ตัว · ระยะ ${tower.range}</b>`:isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isKnight||isWater?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
+        const icon=isLightning?"⚡":isWater?"🥊":isWind?"🌪️":isRunner?"🏃":isKnight?"🗡️":"🧙";
         heroPanel.innerHTML=`<div class="hero-row"><div class="hero-icon">${icon}</div><div><div class="hero-name">${heroName}</div><div class="hero-level">ระดับ ${tower.level} · ${tower.level>=5?"ระดับสูงสุด":role}</div></div></div>
           <div class="hero-stats"><div>พลังโจมตี<b>${tower.damage}${isKnight?" + คริติคอล":""}</b></div><div>${stat2}</div></div>
           <div class="wallet"><span>🪙 เหรียญที่มี</span><strong id="upgrade-wallet">${state.gold.toLocaleString("th-TH")}</strong></div>
@@ -57,7 +57,7 @@
           <div class="cooldown-track"><div class="cooldown-fill" id="cooldown-fill"></div></div>
           <div class="hero-actions"><button class="action primary" id="upgrade-btn" ${tower.level>=5||state.gold<cost?"disabled":""}>⬆️ อัปเกรด <span class="upgrade-cost">${tower.level>=5?"เต็มแล้ว":`🪙 ${cost}`}</span></button><button class="action danger" id="sell-btn">🗑️ ลบ · คืน 🪙 ${Math.floor(tower.invested*.7)}</button></div>
           <p class="upgrade-next">ลบฮีโร่แล้วรับคืน 70% ของต้นทุนวางและอัปเกรด</p>
-          ${tower.level<5?`<p class="upgrade-next">อัปเกรดถัดไป: พลังโจมตี +${isWater?5:isWind?12:isRunner?20:isKnight?18:13}${isWater?" · ระยะ +5":isWind?" · โอกาสผลัก +5%":isKnight?" · โอกาสคริติคอล +5%":isRunner?" · คูลดาวน์ลดลง":""}</p>`:""}`;
+          ${tower.level<5?`<p class="upgrade-next">อัปเกรดถัดไป: พลังโจมตี +${isLightning?10:isWater?5:isWind?12:isRunner?20:isKnight?18:13}${isLightning?" · เป้าหมาย 3 ตัว":isWater?" · ระยะ +5":isWind?" · โอกาสผลัก +5%":isKnight?" · โอกาสคริติคอล +5%":isRunner?" · คูลดาวน์ลดลง":""}</p>`:""}`;
         const button=document.getElementById("upgrade-btn");
         if(button)button.addEventListener("click",()=>upgradeTower());
         document.getElementById("sell-btn").addEventListener("click",sellTower);
@@ -80,11 +80,11 @@
         autoWaveNote.textContent=`คลื่นถัดไปจะเริ่มใน ${state.autoWaveTimer.toFixed(1)} วินาที`;
       }
       function addTower(pad){
-        const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",isWater=state.buildType==="water",cost=isWater?100:isWind?120:isRunner?110:isKnight?125:100;
+        const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",isWater=state.buildType==="water",isLightning=state.buildType==="lightning",cost=isLightning?150:isWater?100:isWind?120:isRunner?110:isKnight?125:100;
         if(state.gold<cost){notify(`เหรียญไม่พอ! ต้องใช้ ${cost} เหรียญ`);return}
         state.gold-=cost;
-        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isWater?10:isWind?18:isRunner?42:isKnight?31:22,range:isWater?100:isWind?185:isRunner?210:isKnight?112:145,rate:isWater?.25:isWind?1:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,slowChance:isWater?.3:0,attackAnim:0,dash:null,stunned:0};
-        state.towers.push(tower);state.selected=tower.id;notify(isWater?"วางหมัดสายน้ำสำเร็จ!":isWind?"เรียกวิญญาณลมสำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
+        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isLightning?20:isWater?10:isWind?18:isRunner?42:isKnight?31:22,range:isLightning?240:isWater?100:isWind?185:isRunner?210:isKnight?112:145,rate:isLightning?1:isWater?.25:isWind?.78:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
+        state.towers.push(tower);state.selected=tower.id;notify(isLightning?"วางปืนสายฟ้าสำเร็จ!":isWater?"วางหมัดสายน้ำสำเร็จ!":isWind?"เรียกวิญญาณลมสำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
       }
       function sellTower(){
         const tower=state.towers.find(t=>t.id===state.selected);if(!tower)return;
@@ -98,7 +98,8 @@
         const cost=upgradeCost(tower);
         if(state.gold<cost){if(notifyUser)notify("เหรียญไม่พอสำหรับการอัปเกรด");return false}
         state.gold-=cost;tower.invested+=cost;tower.level++;
-        if(tower.type==="water"){tower.damage+=5;tower.range+=5}
+        if(tower.type==="lightning"){tower.damage+=10;tower.range+=10}
+        else if(tower.type==="water"){tower.damage+=5;tower.range+=5}
         else if(tower.type==="knight"){tower.damage+=18;tower.range+=5;tower.rate=Math.max(.36,tower.rate-.055);tower.critChance=Math.min(.5,tower.critChance+.05)}
         else if(tower.type==="runner"){tower.damage+=20;tower.range+=12;tower.rate=Math.max(.6,tower.rate-.1)}
         else if(tower.type==="wind"){tower.damage+=12;tower.range+=8;tower.rate=Math.max(.55,tower.rate-.08);tower.knockbackChance=Math.min(.7,tower.knockbackChance+.05)}
@@ -128,7 +129,7 @@
         const fast=!boss&&state.spawnLeft>0&&state.spawnLeft%4===0;
         const hp=(34+state.wave*13)*(boss?5:fast?0.72:1);
         const baseSpeed=48+Math.min(24,state.wave*1.5);
-        state.enemies.push({x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:boss?37:fast?baseSpeed*2.15:baseSpeed,progress:0,boss,dragon:boss,stunTimer:5,slowTimer:0,fast,radius:boss?17:fast?11:12});
+        state.enemies.push({x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:boss?37:fast?baseSpeed*2.15:baseSpeed,progress:0,boss,dragon:boss,stunTimer:5,fast,radius:boss?17:fast?11:12});
       }
       function knockbackEnemy(enemy,distance){
         let remaining=distance;
@@ -164,13 +165,12 @@
           if(state.spawnLeft>0&&state.spawnTimer<=0){spawnEnemy();state.spawnLeft--;state.spawnTimer=Math.max(.42,.92-state.wave*.018)}
         }
         for(const enemy of state.enemies){
-          let remaining=enemy.speed*(enemy.slowTimer>0?.7:1)*dt;
+          let remaining=enemy.speed*dt;
           while(remaining>0&&enemy.progress<path.length-1){
             const next=path[enemy.progress+1],dx=next.x-enemy.x,dy=next.y-enemy.y,distance=Math.hypot(dx,dy);
             if(distance<=remaining){enemy.x=next.x;enemy.y=next.y;remaining-=distance;enemy.progress++}
             else{enemy.x+=dx/distance*remaining;enemy.y+=dy/distance*remaining;remaining=0}
           }
-          enemy.slowTimer=Math.max(0,enemy.slowTimer-dt);
           if(enemy.dragon){
             enemy.stunTimer-=dt;
             if(enemy.stunTimer<=0){
@@ -221,11 +221,19 @@
                 if(critical)for(let i=0;i<9;i++)state.effects.push({type:"spark",x:target.x,y:target.y,vx:(Math.random()-.5)*150,vy:(Math.random()-.5)*150,duration:.35,life:.35,color:"#ffe06a"});
               }else if(tower.type==="water"){
                 tower.cooldown=tower.rate;target.hp-=tower.damage;
-                const slowed=Math.random()<tower.slowChance;
-                if(slowed)target.slowTimer=Math.max(target.slowTimer,1.5);
-                state.effects.push({type:"impact",x:target.x,y:target.y,duration:.24,life:.24,color:slowed?"#a1f1ff":"#65dcff"});
-                state.effects.push({type:"text",x:target.x,y:target.y-19,text:slowed?`-${tower.damage} · ช้าลง!`:`-${tower.damage}`,duration:.6,life:.6,color:slowed?"#b8f7ff":"#b9f2ff"});
-                for(let i=0;i<(slowed?8:4);i++)state.effects.push({type:"spark",x:target.x,y:target.y,vx:(Math.random()-.5)*110,vy:(Math.random()-.5)*110,duration:.28,life:.28,color:slowed?"#a1f1ff":"#65dcff"});
+                state.effects.push({type:"impact",x:target.x,y:target.y,duration:.24,life:.24,color:"#65dcff"});
+                state.effects.push({type:"text",x:target.x,y:target.y-19,text:`-${tower.damage}`,duration:.6,life:.6,color:"#b9f2ff"});
+                for(let i=0;i<4;i++)state.effects.push({type:"spark",x:target.x,y:target.y,vx:(Math.random()-.5)*110,vy:(Math.random()-.5)*110,duration:.28,life:.28,color:"#65dcff"});
+              }else if(tower.type==="lightning"){
+                tower.cooldown=tower.rate;
+                const targets=state.enemies.filter(enemy=>Math.hypot(enemy.x-tower.x,enemy.y-tower.y)<=tower.range)
+                  .sort((a,b)=>b.progress-a.progress).slice(0,3);
+                for(const enemy of targets){
+                  enemy.hp-=tower.damage;
+                  state.effects.push({type:"lightning",x:tower.x,y:tower.y,target:enemy,duration:.24,life:.24});
+                  state.effects.push({type:"text",x:enemy.x,y:enemy.y-20,text:`-${tower.damage}`,duration:.6,life:.6,color:"#fff3a1"});
+                  for(let i=0;i<3;i++)state.effects.push({type:"spark",x:enemy.x,y:enemy.y,vx:(Math.random()-.5)*100,vy:(Math.random()-.5)*100,duration:.24,life:.24,color:"#fff078"});
+                }
               }else if(tower.type==="wind"){
                 tower.cooldown=tower.rate;
                 state.shots.push({type:"wind",x:tower.x,y:tower.y,target,damage:tower.damage,speed:350,knockbackChance:tower.knockbackChance});
@@ -301,9 +309,9 @@
           }
         }
         if(pointer.inside&&pointer.x!==null&&pointer.y!==null){
-          const valid=canPlaceTower(pointer.x,pointer.y),wind=state.buildType==="wind",water=state.buildType==="water",melee=water||state.buildType==="knight"||state.buildType==="runner";
-          const color=valid?(water?"#65dcff":wind?"#8deaff":melee?"#ffad72":"#70e1bc"):"#ff7777";
-          const radius=water?100:wind?185:state.buildType==="runner"?210:state.buildType==="knight"?112:145;
+          const valid=canPlaceTower(pointer.x,pointer.y),wind=state.buildType==="wind",water=state.buildType==="water",lightning=state.buildType==="lightning",melee=water||state.buildType==="knight"||state.buildType==="runner";
+          const color=valid?(lightning?"#fff078":water?"#65dcff":wind?"#8deaff":melee?"#ffad72":"#70e1bc"):"#ff7777";
+          const radius=lightning?240:water?100:wind?185:state.buildType==="runner"?210:state.buildType==="knight"?112:145;
           ctx.fillStyle=color+"0d";ctx.beginPath();ctx.arc(pointer.x,pointer.y,radius,0,Math.PI*2);ctx.fill();
           ctx.strokeStyle=color+"88";ctx.lineWidth=2;ctx.setLineDash([5,6]);ctx.beginPath();ctx.arc(pointer.x,pointer.y,24,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
           ctx.fillStyle=color;ctx.font="20px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(valid?"＋":"×",pointer.x,pointer.y);
@@ -312,24 +320,23 @@
         ctx.font="30px sans-serif";ctx.fillText("🏰",850,214);ctx.font="12px sans-serif";ctx.fillStyle="#fff";ctx.fillText("ปราสาท",850,292);
         ctx.font="23px sans-serif";ctx.fillText("🚩",17,89);
         for(const tower of state.towers){
-          const knight=tower.type==="knight",runner=tower.type==="runner",wind=tower.type==="wind",water=tower.type==="water",accent=water?"#65dcff":wind?"#8deaff":runner||knight?"#ffad72":"#9beeff",drawX=tower.drawX,drawY=tower.drawY;
-          if(tower.id===state.selected){ctx.fillStyle=water?"#65dcff12":wind?"#8deaff12":runner||knight?"#ffad7212":"#70e1bc13";ctx.beginPath();ctx.arc(tower.x,tower.y,tower.range,0,Math.PI*2);ctx.fill();ctx.strokeStyle=water?"#65dcff44":wind?"#8deaff44":runner||knight?"#ffad7244":"#70e1bc38";ctx.lineWidth=1;ctx.stroke()}
+          const knight=tower.type==="knight",runner=tower.type==="runner",wind=tower.type==="wind",water=tower.type==="water",lightning=tower.type==="lightning",accent=lightning?"#fff078":water?"#65dcff":wind?"#8deaff":runner||knight?"#ffad72":"#9beeff",drawX=tower.drawX,drawY=tower.drawY;
+          if(tower.id===state.selected){ctx.fillStyle=lightning?"#fff07812":water?"#65dcff12":wind?"#8deaff12":runner||knight?"#ffad7212":"#70e1bc13";ctx.beginPath();ctx.arc(tower.x,tower.y,tower.range,0,Math.PI*2);ctx.fill();ctx.strokeStyle=lightning?"#fff07844":water?"#65dcff44":wind?"#8deaff44":runner||knight?"#ffad7244":"#70e1bc38";ctx.lineWidth=1;ctx.stroke()}
           if(runner&&tower.dash){ctx.strokeStyle="#ffad7277";ctx.lineWidth=3;ctx.setLineDash([5,6]);ctx.beginPath();ctx.moveTo(tower.x,tower.y);ctx.lineTo(drawX,drawY);ctx.stroke();ctx.setLineDash([])}
           ctx.fillStyle="#10192377";ctx.beginPath();ctx.ellipse(drawX,drawY+15,23,9,0,0,Math.PI*2);ctx.fill();
-          const base=ctx.createRadialGradient(drawX-7,drawY-8,2,drawX,drawY,26);base.addColorStop(0,water?"#e0faff":wind?"#e1fcff":runner||knight?"#ffe3bd":"#ecffff");base.addColorStop(.5,water?"#36a8d2":wind?"#68bfd0":runner||knight?"#d58957":"#5595ad");base.addColorStop(1,water?"#205879":wind?"#315e7b":runner||knight?"#784b3e":"#314d72");
+          const base=ctx.createRadialGradient(drawX-7,drawY-8,2,drawX,drawY,26);base.addColorStop(0,lightning?"#fffbd2":water?"#e0faff":wind?"#e1fcff":runner||knight?"#ffe3bd":"#ecffff");base.addColorStop(.5,lightning?"#d6bc42":water?"#36a8d2":wind?"#68bfd0":runner||knight?"#d58957":"#5595ad");base.addColorStop(1,lightning?"#67531c":water?"#205879":wind?"#315e7b":runner||knight?"#784b3e":"#314d72");
           ctx.fillStyle=base;ctx.beginPath();ctx.arc(drawX,drawY,22,0,Math.PI*2);ctx.fill();
           ctx.strokeStyle=tower.stunned>0?"#ffd27a":tower.id===state.selected?"#fff0bd":accent;ctx.lineWidth=tower.stunned>0||tower.id===state.selected?3:2;ctx.stroke();
           ctx.save();ctx.translate(drawX,drawY);ctx.rotate(tower.attackAnim?-.35:0);
-          ctx.font="25px sans-serif";ctx.fillStyle="#fff";ctx.fillText(water?"🥊":wind?"🌪️":runner?"🏃":knight?"🗡️":"🧙",0,1);ctx.restore();
+          ctx.font="25px sans-serif";ctx.fillStyle="#fff";ctx.fillText(lightning?"⚡":water?"🥊":wind?"🌪️":runner?"🏃":knight?"🗡️":"🧙",0,1);ctx.restore();
           ctx.fillStyle="#172236";ctx.beginPath();ctx.arc(drawX+16,drawY-17,9,0,Math.PI*2);ctx.fill();
           ctx.font="bold 10px sans-serif";ctx.fillStyle="#fff";ctx.fillText(tower.level,drawX+16,drawY-17);
           if(tower.stunned>0){ctx.font="17px sans-serif";ctx.fillText("💫",drawX,drawY-31)}
-          if(tower.attackAnim>0){ctx.strokeStyle=water?"#9cecff":wind?"#baf5ff":runner||knight?"#fff0b8":"#9beeff";ctx.globalAlpha=tower.attackAnim/.28;ctx.lineWidth=3;ctx.beginPath();ctx.arc(drawX,drawY,28+tower.attackAnim*28,runner?-1.5:knight||water?-.9:-2.7,runner?1.5:knight||water?1.3:-1.1);ctx.stroke();ctx.globalAlpha=1}
+          if(tower.attackAnim>0){ctx.strokeStyle=lightning?"#fff078":water?"#9cecff":wind?"#baf5ff":runner||knight?"#fff0b8":"#9beeff";ctx.globalAlpha=tower.attackAnim/.28;ctx.lineWidth=3;ctx.beginPath();ctx.arc(drawX,drawY,28+tower.attackAnim*28,runner?-1.5:knight||water?-.9:-2.7,runner?1.5:knight||water?1.3:-1.1);ctx.stroke();ctx.globalAlpha=1}
         }
         for(const enemy of state.enemies){
           if(enemy.fast){ctx.strokeStyle="#bbf5ff99";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(enemy.x-23,enemy.y-4);ctx.lineTo(enemy.x-11,enemy.y-4);ctx.moveTo(enemy.x-20,enemy.y+3);ctx.lineTo(enemy.x-9,enemy.y+3);ctx.stroke()}
           ctx.font=enemy.dragon?"36px sans-serif":"23px sans-serif";ctx.fillText(enemy.dragon?"🐉":enemy.fast?"🐇":"👾",enemy.x,enemy.y);
-          if(enemy.slowTimer>0){ctx.font="13px sans-serif";ctx.fillText("❄️",enemy.x+17,enemy.y-17)}
           const bw=enemy.boss?58:42,bh=enemy.boss?7:6,bx=enemy.x-bw/2,by=enemy.y-enemy.radius-9;
           ctx.textBaseline="bottom";ctx.font=enemy.boss?"bold 11px Kanit, sans-serif":"bold 10px Kanit, sans-serif";
           ctx.fillStyle="#fff";ctx.shadowColor="#142018";ctx.shadowBlur=4;
@@ -350,6 +357,16 @@
           }else if(effect.type==="gust"){
             ctx.globalAlpha=effect.life/effect.duration;ctx.strokeStyle="#a9efff";ctx.lineWidth=4;ctx.shadowColor="#71ddff";ctx.shadowBlur=19;
             for(let ring=0;ring<3;ring++){ctx.beginPath();ctx.arc(effect.x,effect.y,10+progress*44+ring*8,progress*4+ring*2,progress*4+ring*2+Math.PI*1.25);ctx.stroke()}
+          }else if(effect.type==="lightning"){
+            if(!state.enemies.includes(effect.target)){ctx.restore();continue}
+            const dx=effect.target.x-effect.x,dy=effect.target.y-effect.y;
+            ctx.globalAlpha=effect.life/effect.duration;ctx.strokeStyle="#fff7a0";ctx.lineWidth=4;ctx.shadowColor="#ffe94d";ctx.shadowBlur=22;
+            ctx.beginPath();ctx.moveTo(effect.x,effect.y);
+            for(let segment=1;segment<7;segment++){
+              const t=segment/7,offset=Math.sin(segment*12.9+progress*10)*13;
+              ctx.lineTo(effect.x+dx*t-dy/Math.max(1,Math.hypot(dx,dy))*offset,effect.y+dy*t+dx/Math.max(1,Math.hypot(dx,dy))*offset);
+            }
+            ctx.lineTo(effect.target.x,effect.target.y);ctx.stroke();
           }else if(effect.type==="stun-pulse"){
             ctx.globalAlpha=effect.life/effect.duration;ctx.strokeStyle="#ffd27a";ctx.lineWidth=5;ctx.shadowColor="#ffbd59";ctx.shadowBlur=22;ctx.beginPath();ctx.arc(effect.x,effect.y,progress*effect.radius,0,Math.PI*2);ctx.stroke();
           }else if(effect.type==="spark"){
