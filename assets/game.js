@@ -47,18 +47,18 @@
         const cost=upgradeCost(tower);
         const isKnight=tower.type==="knight",isRunner=tower.type==="runner",isWind=tower.type==="wind",isWater=tower.type==="water",isLightning=tower.type==="lightning",isMage=tower.type==="mage",isSkybird=tower.type==="skybird";
         const heroName=isSkybird?"นกเวหา":isLightning?"ปืนสายฟ้า":isWater?"หมัดสายน้ำ":isWind?"วิญญาณลม":isRunner?"นักวิ่งพุ่งชน":isKnight?"นักดาบคริติคอล":"ผู้พิทักษ์เวทมนตร์";
-        const role=isSkybird?"ยิงขนนก · บินชนวงกว้าง":isMage?"วงเวทใหญ่ · ระเบิดเป็นวงกว้าง":isLightning?"ยิงสายฟ้าใส่ศัตรู 3 ตัว":isWater?"ประชิด":isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
+        const role=isSkybird?"ยิงขนนก · บินชนวงกว้าง":isMage?"ยิงพลังเวท · วงแหวนเวทวงกว้าง":isLightning?"ยิงสายฟ้าใส่ศัตรู 3 ตัว":isWater?"ประชิด":isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
         const blastRadius=82+(tower.level-1)*10;
-        const stat2=isSkybird?`ระยะยิง<b>${tower.range} · วงบินชน ${tower.diveRadius}</b>`:isMage?`วงเวท<b>รัศมี ${blastRadius} · ระยะ ${tower.range}</b>`:isLightning?`เป้าหมาย<b>3 ตัว · ระยะ ${tower.range}</b>`:isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isKnight||isWater?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
+        const stat2=isSkybird?`ระยะยิง<b>${tower.range} · วงบินชน ${tower.diveRadius}</b>`:isMage?`ระยะยิง<b>${tower.range} · วงแหวนรัศมี ${blastRadius}</b>`:isLightning?`เป้าหมาย<b>3 ตัว · ระยะ ${tower.range}</b>`:isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isKnight||isWater?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
         const icon=isSkybird?"🦅":isMage?"🧙":isLightning?"⚡":isWater?"🥊":isWind?"🌪️":isRunner?"🏃":isKnight?"🗡️":"🧙";
         heroPanel.innerHTML=`<div class="hero-row"><div class="hero-icon">${icon}</div><div><div class="hero-name">${heroName}</div><div class="hero-level">ระดับ ${tower.level} · ${tower.level>=5?"ระดับสูงสุด":role}</div></div></div>
-          <div class="hero-stats"><div>${isSkybird?"ขนนก / บินชน":"พลังโจมตี"}<b>${isSkybird?`${tower.featherDamage} / ${tower.diveDamage}`:`${tower.damage}${isKnight?" + คริติคอล":""}`}</b></div><div>${stat2}</div></div>
+          <div class="hero-stats"><div>${isSkybird?"ขนนก / บินชน":isMage?"พลังเวท / วงแหวน":"พลังโจมตี"}<b>${isSkybird?`${tower.featherDamage} / ${tower.diveDamage}`:isMage?`${tower.magicDamage} / ${tower.ringDamage}`:`${tower.damage}${isKnight?" + คริติคอล":""}`}</b></div><div>${stat2}</div></div>
           <div class="wallet"><span>🪙 เหรียญที่มี</span><strong id="upgrade-wallet">${state.gold.toLocaleString("th-TH")}</strong></div>
-          ${isSkybird?`<div class="bird-cooldowns"><div><span>🪶 ขนนก · ${tower.featherRate.toFixed(1)} วิ</span><strong id="feather-cooldown-value">พร้อมโจมตี</strong><div class="cooldown-track"><div class="cooldown-fill" id="feather-cooldown-fill"></div></div></div><div><span>🦅 บินชน · ${tower.diveRate.toFixed(0)} วิ</span><strong id="dive-cooldown-value">พร้อมโจมตี</strong><div class="cooldown-track"><div class="cooldown-fill" id="dive-cooldown-fill"></div></div></div></div>`:`<div class="cooldown-readout"><span>คูลดาวน์โจมตี · ${tower.rate.toFixed(2)} วินาที</span><strong id="cooldown-value">พร้อมโจมตี</strong></div>
+          ${isSkybird||isMage?`<div class="bird-cooldowns"><div><span>${isSkybird?"🪶 ขนนก":"✨ ยิงพลังเวท"} · ${(isSkybird?tower.featherRate:tower.magicRate).toFixed(2)} วิ</span><strong id="feather-cooldown-value">พร้อมโจมตี</strong><div class="cooldown-track"><div class="cooldown-fill" id="feather-cooldown-fill"></div></div></div><div><span>${isSkybird?"🦅 บินชน":"🔮 วงแหวนเวท"} · ${(isSkybird?tower.diveRate:tower.ringRate).toFixed(2)} วิ</span><strong id="dive-cooldown-value">พร้อมโจมตี</strong><div class="cooldown-track"><div class="cooldown-fill" id="dive-cooldown-fill"></div></div></div></div>`:`<div class="cooldown-readout"><span>คูลดาวน์โจมตี · ${tower.rate.toFixed(2)} วินาที</span><strong id="cooldown-value">พร้อมโจมตี</strong></div>
           <div class="cooldown-track"><div class="cooldown-fill" id="cooldown-fill"></div></div>`}
           <div class="hero-actions"><button class="action primary" id="upgrade-btn" ${tower.level>=5||state.gold<cost?"disabled":""}>⬆️ อัปเกรด <span class="upgrade-cost">${tower.level>=5?"เต็มแล้ว":`🪙 ${cost}`}</span></button><button class="action danger" id="sell-btn">🗑️ ลบ · คืน 🪙 ${Math.floor(tower.invested*.7)}</button></div>
           <p class="upgrade-next">ลบฮีโร่แล้วรับคืน 70% ของต้นทุนวางและอัปเกรด</p>
-          ${tower.level<5?`<p class="upgrade-next">อัปเกรดถัดไป: ${isSkybird?"ขนนก +5 · บินชน +12 · วงกว้างขึ้น":`พลังโจมตี +${isMage?13:isLightning?10:isWater?5:isWind?12:isRunner?20:isKnight?18:13}${isMage?" · วงเวทกว้างขึ้น":isLightning?" · เป้าหมาย 3 ตัว":isWater?" · ระยะ +5":isWind?" · โอกาสผลัก +5%":isKnight?" · โอกาสคริติคอล +5%":isRunner?" · คูลดาวน์ลดลง":""}`}</p>`:""}`;
+          ${tower.level<5?`<p class="upgrade-next">อัปเกรดถัดไป: ${isSkybird?"ขนนก +5 · บินชน +12 · วงกว้างขึ้น":isMage?"พลังเวท +5 · วงแหวน +13 · ระยะยิงเพิ่ม":`พลังโจมตี +${isLightning?10:isWater?5:isWind?12:isRunner?20:isKnight?18:13}${isLightning?" · เป้าหมาย 3 ตัว":isWater?" · ระยะ +5":isWind?" · โอกาสผลัก +5%":isKnight?" · โอกาสคริติคอล +5%":isRunner?" · คูลดาวน์ลดลง":""}`}</p>`:""}`;
         const button=document.getElementById("upgrade-btn");
         if(button)button.addEventListener("click",()=>upgradeTower());
         document.getElementById("sell-btn").addEventListener("click",sellTower);
@@ -66,8 +66,9 @@
       function upgradeCost(tower){return 70+tower.level*55}
       function updateCooldownDisplay(){
         const tower=state.towers.find(t=>t.id===state.selected);
-        if(tower?.type==="skybird"){
-          for(const [id,fillId,cooldown,rate] of [["feather-cooldown-value","feather-cooldown-fill",tower.featherCooldown,tower.featherRate],["dive-cooldown-value","dive-cooldown-fill",tower.diveCooldown,tower.diveRate]]){
+        if(tower?.type==="skybird"||tower?.type==="mage"){
+          const cooldowns=tower.type==="skybird"?[[tower.featherCooldown,tower.featherRate],[tower.diveCooldown,tower.diveRate]]:[[tower.magicCooldown,tower.magicRate],[tower.ringCooldown,tower.ringRate]];
+          for(const [id,fillId,[cooldown,rate]] of [["feather-cooldown-value","feather-cooldown-fill",cooldowns[0]],["dive-cooldown-value","dive-cooldown-fill",cooldowns[1]]]){
             const value=document.getElementById(id),fill=document.getElementById(fillId);
             if(value&&fill){
               value.textContent=tower.stunned>0?`ถูกสตัน ${tower.stunned.toFixed(1)} วิ`:cooldown>0?`เหลือ ${cooldown.toFixed(1)} วิ`:"พร้อมโจมตี";
@@ -94,7 +95,7 @@
         const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",isWater=state.buildType==="water",isLightning=state.buildType==="lightning",isMage=state.buildType==="mage",isSkybird=state.buildType==="skybird",cost=isSkybird?140:isLightning?150:isWater?100:isWind?120:isRunner?110:isKnight?125:100;
         if(state.gold<cost){notify(`เหรียญไม่พอ! ต้องใช้ ${cost} เหรียญ`);return}
         state.gold-=cost;
-        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isLightning?20:isWater?10:isWind?18:isRunner?42:isKnight?31:isMage?50:22,range:isSkybird?220:isLightning?240:isWater?100:isWind?185:isRunner?210:isKnight?112:isMage?180:145,rate:isLightning?1:isWater?.25:isWind?.78:isRunner?1.25:isKnight?.72:isMage?3.5:.82,cooldown:.2,featherDamage:15,diveDamage:40,featherRate:.4,diveRate:6,featherCooldown:.2,diveCooldown:.2,diveRadius:92,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
+        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isLightning?20:isWater?10:isWind?18:isRunner?42:isKnight?31:isMage?20:22,magicDamage:20,ringDamage:50,magicRate:.75,ringRate:5,magicCooldown:.2,ringCooldown:.2,range:isSkybird?220:isLightning?240:isWater?100:isWind?185:isRunner?210:isKnight?112:isMage?180:145,rate:isLightning?1:isWater?.25:isWind?.78:isRunner?1.25:isKnight?.72:isMage?.75:.82,cooldown:.2,featherDamage:15,diveDamage:40,featherRate:.4,diveRate:6,featherCooldown:.2,diveCooldown:.2,diveRadius:92,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
         state.towers.push(tower);state.selected=tower.id;notify(isSkybird?"วางนกเวหาสำเร็จ!":isLightning?"วางปืนสายฟ้าสำเร็จ!":isWater?"วางหมัดสายน้ำสำเร็จ!":isWind?"เรียกวิญญาณลมสำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
       }
       function sellTower(){
@@ -110,7 +111,7 @@
         if(state.gold<cost){if(notifyUser)notify("เหรียญไม่พอสำหรับการอัปเกรด");return false}
         state.gold-=cost;tower.invested+=cost;tower.level++;
         if(tower.type==="skybird"){tower.featherDamage+=5;tower.diveDamage+=12;tower.diveRadius+=8}
-        else if(tower.type==="mage"){tower.damage+=13;tower.range+=12}
+        else if(tower.type==="mage"){tower.magicDamage+=5;tower.ringDamage+=13;tower.range+=12}
         else if(tower.type==="lightning"){tower.damage+=10;tower.range+=10}
         else if(tower.type==="water"){tower.damage+=5;tower.range+=5}
         else if(tower.type==="knight"){tower.damage+=18;tower.range+=5;tower.rate=Math.max(.36,tower.rate-.055);tower.critChance=Math.min(.5,tower.critChance+.05)}
@@ -217,6 +218,9 @@
           if(tower.type==="skybird"){
             tower.featherCooldown=Math.max(0,tower.featherCooldown-dt);
             tower.diveCooldown=Math.max(0,tower.diveCooldown-dt);
+          }else if(tower.type==="mage"){
+            tower.magicCooldown=Math.max(0,tower.magicCooldown-dt);
+            tower.ringCooldown=Math.max(0,tower.ringCooldown-dt);
           }
           tower.stunned=Math.max(0,tower.stunned-dt);
           if(tower.stunned>0)continue;
@@ -254,6 +258,23 @@
               }
               state.effects.push({type:"sky-dive",x:target.x,y:target.y,radius:tower.diveRadius,duration:.65,life:.65});
             }
+          }else if(tower.type==="mage"){
+            const target=state.enemies.filter(enemy=>Math.hypot(enemy.x-tower.x,enemy.y-tower.y)<=tower.range).sort((a,b)=>b.progress-a.progress)[0];
+            if(target&&tower.magicCooldown<=0){
+              tower.magicCooldown=tower.magicRate;tower.attackAnim=.24;
+              state.shots.push({type:"mage-bolt",x:tower.x,y:tower.y-12,target,damage:tower.magicDamage,speed:460});
+            }
+            if(target&&tower.ringCooldown<=0){
+              tower.ringCooldown=tower.ringRate;tower.attackAnim=.38;
+              const blastRadius=82+(tower.level-1)*10;
+              const targets=state.enemies.filter(enemy=>Math.hypot(enemy.x-target.x,enemy.y-target.y)<=blastRadius);
+              for(const enemy of targets){
+                enemy.hp-=tower.ringDamage;
+                state.effects.push({type:"text",x:enemy.x,y:enemy.y-20,text:`-${tower.ringDamage}`,duration:.7,life:.7,color:"#e6d5ff"});
+                for(let i=0;i<5;i++)state.effects.push({type:"spark",x:enemy.x,y:enemy.y,vx:(Math.random()-.5)*130,vy:(Math.random()-.5)*130,duration:.38,life:.38,color:i%2?"#c9a5ff":"#fff0a8"});
+              }
+              state.effects.push({type:"arcane-blast",x:target.x,y:target.y,radius:blastRadius,duration:.85,life:.85});
+            }
           }else if(tower.cooldown<=0){
             const target=state.enemies.filter(e=>Math.hypot(e.x-tower.x,e.y-tower.y)<=tower.range).sort((a,b)=>b.progress-a.progress)[0];
             if(target){
@@ -284,15 +305,6 @@
               }else if(tower.type==="wind"){
                 tower.cooldown=tower.rate;
                 state.shots.push({type:"wind",x:tower.x,y:tower.y,target,damage:tower.damage,speed:350,knockbackChance:tower.knockbackChance});
-              }else if(tower.type==="mage"){
-                tower.cooldown=tower.rate;
-                const blastRadius=82+(tower.level-1)*10,targets=state.enemies.filter(enemy=>Math.hypot(enemy.x-target.x,enemy.y-target.y)<=blastRadius);
-                for(const enemy of targets){
-                  enemy.hp-=tower.damage;
-                  state.effects.push({type:"text",x:enemy.x,y:enemy.y-20,text:`-${tower.damage}`,duration:.7,life:.7,color:"#e6d5ff"});
-                  for(let i=0;i<5;i++)state.effects.push({type:"spark",x:enemy.x,y:enemy.y,vx:(Math.random()-.5)*130,vy:(Math.random()-.5)*130,duration:.38,life:.38,color:i%2?"#c9a5ff":"#fff0a8"});
-                }
-                state.effects.push({type:"arcane-blast",x:target.x,y:target.y,radius:blastRadius,duration:.85,life:.85});
               }else{tower.cooldown=tower.rate;state.shots.push({x:tower.x,y:tower.y-12,target,damage:tower.damage,speed:420})}
             }
           }
@@ -311,9 +323,9 @@
                 for(let i=0;i<11;i++)state.effects.push({type:"spark",x:hitX,y:hitY,vx:(Math.random()-.5)*170,vy:(Math.random()-.5)*170,duration:.42,life:.42,color:"#9deaff"});
               }
             }else{
-              const color=shot.type==="feather"?"#ffe5a1":"#8deaff";
+              const color=shot.type==="feather"?"#ffe5a1":shot.type==="mage-bolt"?"#caa5ff":"#8deaff";
               state.effects.push({type:"impact",x:hitX,y:hitY,duration:.25,life:.25,color});
-              state.effects.push({type:"text",x:hitX,y:hitY-19,text:`-${shot.damage}`,duration:.6,life:.6,color:shot.type==="feather"?"#fff0c4":"#e7f6ff"});
+              state.effects.push({type:"text",x:hitX,y:hitY-19,text:`-${shot.damage}`,duration:.6,life:.6,color:shot.type==="feather"?"#fff0c4":shot.type==="mage-bolt"?"#eadcff":"#e7f6ff"});
               for(let i=0;i<5;i++)state.effects.push({type:"spark",x:hitX,y:hitY,vx:(Math.random()-.5)*100,vy:(Math.random()-.5)*100,duration:.25,life:.25,color});
             }
           }else{shot.x+=dx/distance*step;shot.y+=dy/distance*step;shot.life=1}
@@ -520,6 +532,9 @@
             const angle=Math.atan2(shot.target.y-shot.y,shot.target.x-shot.x);ctx.save();ctx.translate(shot.x,shot.y);ctx.rotate(angle);
             ctx.fillStyle="#fff0ba";ctx.shadowColor="#85dcff";ctx.shadowBlur=18;ctx.beginPath();ctx.moveTo(-10,-4);ctx.quadraticCurveTo(1,-5,11,0);ctx.quadraticCurveTo(1,5,-10,4);ctx.closePath();ctx.fill();
             ctx.strokeStyle="#79c9e9";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(9,0);ctx.stroke();ctx.restore();ctx.shadowBlur=0;
+          }else if(shot.type==="mage-bolt"){
+            ctx.fillStyle="#e6d5ff";ctx.shadowColor="#b875ff";ctx.shadowBlur=20;ctx.beginPath();ctx.arc(shot.x,shot.y,6,0,Math.PI*2);ctx.fill();
+            ctx.strokeStyle="#fff0c4";ctx.lineWidth=2;ctx.beginPath();ctx.arc(shot.x,shot.y,9,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
           }else{ctx.fillStyle="#c6f4ff";ctx.shadowColor="#67dcff";ctx.shadowBlur=17;ctx.beginPath();ctx.arc(shot.x,shot.y,5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}
         }
       }
