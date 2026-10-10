@@ -47,8 +47,8 @@
         const cost=upgradeCost(tower);
         const isKnight=tower.type==="knight",isRunner=tower.type==="runner",isWind=tower.type==="wind",isWater=tower.type==="water";
         const heroName=isWater?"หมัดสายน้ำ":isWind?"วิญญาณลม":isRunner?"นักวิ่งพุ่งชน":isKnight?"นักดาบคริติคอล":"ผู้พิทักษ์เวทมนตร์";
-        const role=isWater?"ประชิด · หมัดสายน้ำ":isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
-        const stat2=isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isKnight||isWater?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
+        const role=isWater?`ประชิด · โอกาสลดความเร็ว ${Math.round(tower.slowChance*100)}%`:isWind?`พายุผลักถอยหลัง ${Math.round(tower.knockbackChance*100)}%`:isRunner?"พุ่งชน · กลับไปยังจุดยืน":isKnight?`ประชิด · คริติคอล ${Math.round(tower.critChance*100)}% ×${tower.critMultiplier}`:"ระยะไกล · กระสุนเวท";
+        const stat2=isWind?`โอกาสผลัก<b>${Math.round(tower.knockbackChance*100)}%</b>`:isRunner?`ระยะพุ่ง<b>${tower.range}</b>`:isWater?`ระยะประชิด<b>${tower.range} · ลดความเร็ว 30% นาน 1.5 วิ</b>`:isKnight?`ระยะประชิด<b>${tower.range}</b>`:`ระยะยิง<b>${tower.range}</b>`;
         const icon=isWater?"🥊":isWind?"🌪️":isRunner?"🏃":isKnight?"🗡️":"🧙";
         heroPanel.innerHTML=`<div class="hero-row"><div class="hero-icon">${icon}</div><div><div class="hero-name">${heroName}</div><div class="hero-level">ระดับ ${tower.level} · ${tower.level>=5?"ระดับสูงสุด":role}</div></div></div>
           <div class="hero-stats"><div>พลังโจมตี<b>${tower.damage}${isKnight?" + คริติคอล":""}</b></div><div>${stat2}</div></div>
@@ -83,7 +83,7 @@
         const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",isWater=state.buildType==="water",cost=isWater?100:isWind?120:isRunner?110:isKnight?125:100;
         if(state.gold<cost){notify(`เหรียญไม่พอ! ต้องใช้ ${cost} เหรียญ`);return}
         state.gold-=cost;
-        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isWater?5:isWind?18:isRunner?42:isKnight?31:22,range:isWater?100:isWind?185:isRunner?210:isKnight?112:145,rate:isWater?.2:isWind?1:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
+        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isWater?10:isWind?18:isRunner?42:isKnight?31:22,range:isWater?100:isWind?185:isRunner?210:isKnight?112:145,rate:isWater?.25:isWind?1:isRunner?1.25:isKnight?.72:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,slowChance:isWater?.3:0,attackAnim:0,dash:null,stunned:0};
         state.towers.push(tower);state.selected=tower.id;notify(isWater?"วางหมัดสายน้ำสำเร็จ!":isWind?"เรียกวิญญาณลมสำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
       }
       function sellTower(){
@@ -128,7 +128,7 @@
         const fast=!boss&&state.spawnLeft>0&&state.spawnLeft%4===0;
         const hp=(34+state.wave*13)*(boss?5:fast?0.72:1);
         const baseSpeed=48+Math.min(24,state.wave*1.5);
-        state.enemies.push({x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:boss?37:fast?baseSpeed*2.15:baseSpeed,progress:0,boss,dragon:boss,stunTimer:5,fast,radius:boss?17:fast?11:12});
+        state.enemies.push({x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:boss?37:fast?baseSpeed*2.15:baseSpeed,progress:0,boss,dragon:boss,stunTimer:5,slowTimer:0,fast,radius:boss?17:fast?11:12});
       }
       function knockbackEnemy(enemy,distance){
         let remaining=distance;
@@ -164,12 +164,13 @@
           if(state.spawnLeft>0&&state.spawnTimer<=0){spawnEnemy();state.spawnLeft--;state.spawnTimer=Math.max(.42,.92-state.wave*.018)}
         }
         for(const enemy of state.enemies){
-          let remaining=enemy.speed*dt;
+          let remaining=enemy.speed*(enemy.slowTimer>0?.7:1)*dt;
           while(remaining>0&&enemy.progress<path.length-1){
             const next=path[enemy.progress+1],dx=next.x-enemy.x,dy=next.y-enemy.y,distance=Math.hypot(dx,dy);
             if(distance<=remaining){enemy.x=next.x;enemy.y=next.y;remaining-=distance;enemy.progress++}
             else{enemy.x+=dx/distance*remaining;enemy.y+=dy/distance*remaining;remaining=0}
           }
+          enemy.slowTimer=Math.max(0,enemy.slowTimer-dt);
           if(enemy.dragon){
             enemy.stunTimer-=dt;
             if(enemy.stunTimer<=0){
@@ -220,9 +221,11 @@
                 if(critical)for(let i=0;i<9;i++)state.effects.push({type:"spark",x:target.x,y:target.y,vx:(Math.random()-.5)*150,vy:(Math.random()-.5)*150,duration:.35,life:.35,color:"#ffe06a"});
               }else if(tower.type==="water"){
                 tower.cooldown=tower.rate;target.hp-=tower.damage;
-                state.effects.push({type:"impact",x:target.x,y:target.y,duration:.24,life:.24,color:"#65dcff"});
-                state.effects.push({type:"text",x:target.x,y:target.y-19,text:`-${tower.damage}`,duration:.6,life:.6,color:"#b9f2ff"});
-                for(let i=0;i<4;i++)state.effects.push({type:"spark",x:target.x,y:target.y,vx:(Math.random()-.5)*110,vy:(Math.random()-.5)*110,duration:.28,life:.28,color:"#65dcff"});
+                const slowed=Math.random()<tower.slowChance;
+                if(slowed)target.slowTimer=Math.max(target.slowTimer,1.5);
+                state.effects.push({type:"impact",x:target.x,y:target.y,duration:.24,life:.24,color:slowed?"#a1f1ff":"#65dcff"});
+                state.effects.push({type:"text",x:target.x,y:target.y-19,text:slowed?`-${tower.damage} · ช้าลง!`:`-${tower.damage}`,duration:.6,life:.6,color:slowed?"#b8f7ff":"#b9f2ff"});
+                for(let i=0;i<(slowed?8:4);i++)state.effects.push({type:"spark",x:target.x,y:target.y,vx:(Math.random()-.5)*110,vy:(Math.random()-.5)*110,duration:.28,life:.28,color:slowed?"#a1f1ff":"#65dcff"});
               }else if(tower.type==="wind"){
                 tower.cooldown=tower.rate;
                 state.shots.push({type:"wind",x:tower.x,y:tower.y,target,damage:tower.damage,speed:350,knockbackChance:tower.knockbackChance});
@@ -326,6 +329,7 @@
         for(const enemy of state.enemies){
           if(enemy.fast){ctx.strokeStyle="#bbf5ff99";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(enemy.x-23,enemy.y-4);ctx.lineTo(enemy.x-11,enemy.y-4);ctx.moveTo(enemy.x-20,enemy.y+3);ctx.lineTo(enemy.x-9,enemy.y+3);ctx.stroke()}
           ctx.font=enemy.dragon?"36px sans-serif":"23px sans-serif";ctx.fillText(enemy.dragon?"🐉":enemy.fast?"🐇":"👾",enemy.x,enemy.y);
+          if(enemy.slowTimer>0){ctx.font="13px sans-serif";ctx.fillText("❄️",enemy.x+17,enemy.y-17)}
           const bw=enemy.boss?58:42,bh=enemy.boss?7:6,bx=enemy.x-bw/2,by=enemy.y-enemy.radius-9;
           ctx.textBaseline="bottom";ctx.font=enemy.boss?"bold 11px Kanit, sans-serif":"bold 10px Kanit, sans-serif";
           ctx.fillStyle="#fff";ctx.shadowColor="#142018";ctx.shadowBlur=4;
