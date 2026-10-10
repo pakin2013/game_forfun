@@ -21,7 +21,7 @@
         {x:325,y:180},{x:505,y:180},{x:505,y:390},{x:685,y:390},
         {x:685,y:255},{x:850,y:255},{x:935,y:255}
       ];
-      const state = {gold:180,lives:20,wave:0,enemies:[],towers:[],shots:[],effects:[],selected:null,buildType:"mage",active:false,paused:false,speed:1,spawnLeft:0,spawnTimer:0,lastTime:0,over:false,autoWave:false,autoWaveDelay:8,autoWaveTimer:0,autoUpgrade:false};
+      const state = {gold:180,lives:20,wave:0,waveJustEnded:false,enemies:[],towers:[],shots:[],effects:[],selected:null,buildType:"mage",active:false,paused:false,speed:1,spawnLeft:0,spawnTimer:0,lastTime:0,over:false,autoWave:false,autoWaveDelay:8,autoWaveTimer:0,autoUpgrade:false};
       let toastTimer,pointer={x:null,y:null,inside:false};
 
       function notify(message){
@@ -33,7 +33,7 @@
         enemiesEl.textContent=state.enemies.length+(state.active?state.spawnLeft:0);
         waveBtn.disabled=state.active||state.over;
         waveBtn.textContent=state.active?"กำลังต่อสู้…　⚔":`เริ่มคลื่นที่ ${state.wave+1}　▶`;
-        waveNote.textContent=state.active?`เหลือศัตรูอีก ${state.spawnLeft} ตัว`:(state.wave?"คลื่นถัดไปแข็งแกร่งขึ้น!":"เตรียมตัวให้พร้อมก่อนเริ่ม!");
+        waveNote.textContent=state.active?`เหลือศัตรูอีก ${state.spawnLeft} ตัว`:state.waveJustEnded?"จบคลื่น":(state.wave?"คลื่นถัดไปแข็งแกร่งขึ้น!":"เตรียมตัวให้พร้อมก่อนเริ่ม!");
         pauseBtn.textContent=state.paused?"▶ เล่นต่อ":"⏸ หยุดเกม";
         autoWaveInput.checked=state.autoWave;autoWaveDelayInput.value=state.autoWaveDelay;autoUpgradeInput.checked=state.autoUpgrade;
         document.querySelectorAll(".hero-choice").forEach(button=>button.classList.toggle("active",button.dataset.hero===state.buildType));
@@ -84,7 +84,7 @@
         const isKnight=state.buildType==="knight",isRunner=state.buildType==="runner",isWind=state.buildType==="wind",isWater=state.buildType==="water",isLightning=state.buildType==="lightning",isMage=state.buildType==="mage",cost=isLightning?150:isWater?100:isWind?120:isRunner?110:isKnight?125:100;
         if(state.gold<cost){notify(`เหรียญไม่พอ! ต้องใช้ ${cost} เหรียญ`);return}
         state.gold-=cost;
-        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isLightning?20:isWater?10:isWind?18:isRunner?42:isKnight?31:isMage?50:22,range:isLightning?240:isWater?100:isWind?185:isRunner?210:isKnight?112:isMage?180:145,rate:isLightning?1:isWater?.25:isWind?.78:isRunner?1.25:isKnight?.72:isMage?5:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
+        const tower={id:Date.now()+Math.random(),type:state.buildType,x:pad.x,y:pad.y,drawX:pad.x,drawY:pad.y,level:1,invested:cost,damage:isLightning?20:isWater?10:isWind?18:isRunner?42:isKnight?31:isMage?50:22,range:isLightning?240:isWater?100:isWind?185:isRunner?210:isKnight?112:isMage?180:145,rate:isLightning?1:isWater?.25:isWind?.78:isRunner?1.25:isKnight?.72:isMage?3.5:.82,cooldown:.2,critChance:isKnight?.25:0,critMultiplier:2.2,knockbackChance:isWind?.25:0,attackAnim:0,dash:null,stunned:0};
         state.towers.push(tower);state.selected=tower.id;notify(isLightning?"วางปืนสายฟ้าสำเร็จ!":isWater?"วางหมัดสายน้ำสำเร็จ!":isWind?"เรียกวิญญาณลมสำเร็จ!":isRunner?"วางนักวิ่งพุ่งชนสำเร็จ!":isKnight?"วางนักดาบคริติคอลสำเร็จ!":"วางผู้พิทักษ์เวทมนตร์สำเร็จ!");updateHud();
       }
       function sellTower(){
@@ -123,13 +123,13 @@
       }
       function startWave(){
         if(state.active||state.over)return;
-        state.wave++;state.active=true;state.autoWaveTimer=0;state.spawnLeft=6+state.wave*2;state.spawnTimer=.35;
+        state.wave++;state.waveJustEnded=false;state.active=true;state.autoWaveTimer=0;state.spawnLeft=6+state.wave*2;state.spawnTimer=.35;
         notify(state.wave%5===0?`คลื่นที่ ${state.wave} กำลังมา! ระวังบอสมังกร 🐉`:`คลื่นที่ ${state.wave} กำลังมา!`);updateHud();
       }
       function spawnEnemy(){
         const boss=state.wave%5===0&&state.spawnLeft===1;
         const fast=!boss&&state.spawnLeft>0&&state.spawnLeft%4===0;
-        const hp=boss?750:(34+state.wave*13)*(fast?0.72:1);
+        const hp=boss?1000:(34+state.wave*13)*(fast?0.72:1);
         const baseSpeed=48+Math.min(24,state.wave*1.5);
         state.enemies.push({x:path[0].x,y:path[0].y,hp,maxHp:hp,speed:boss?37:fast?baseSpeed*2.15:baseSpeed,progress:0,boss,dragon:boss,stunTimer:5,fast,radius:boss?17:fast?11:12});
       }
@@ -289,10 +289,10 @@
           updateHud();
         }
         if(state.active&&state.spawnLeft===0&&state.enemies.length===0){
-          state.active=false;const reward=35+state.wave*5;state.gold+=reward;
+          state.active=false;state.waveJustEnded=true;const reward=35+state.wave*5;state.gold+=reward;
           const upgraded=autoUpgradeTowers();
           state.autoWaveTimer=state.autoWave?state.autoWaveDelay:0;
-          notify(`ผ่านคลื่นที่ ${state.wave}! รับโบนัส ${reward} เหรียญ${upgraded?` · อัปเกรด ${upgraded} ครั้ง`:""}`);updateHud();
+          notify(`จบคลื่น! รับโบนัส ${reward} เหรียญ${upgraded?` · อัปเกรด ${upgraded} ครั้ง`:""}`);updateHud();
         }
         if(state.lives===0){state.over=true;document.getElementById("result-text").textContent=`ป้องกันได้ ${state.wave} คลื่น และกำจัดศัตรูไปแล้ว!`;document.getElementById("game-over").classList.add("show");updateHud()}
       }
@@ -384,7 +384,7 @@
           const bw=enemy.dragon?76:42,bh=enemy.dragon?9:6,bx=enemy.x-bw/2,by=enemy.y-enemy.radius-(enemy.dragon?29:9);
           ctx.textBaseline="bottom";ctx.font=enemy.dragon?"bold 12px Kanit, sans-serif":"bold 10px Kanit, sans-serif";
           ctx.fillStyle=enemy.dragon?"#ffd3a0":"#fff";ctx.shadowColor=enemy.dragon?"#b72d29":"#142018";ctx.shadowBlur=5;
-          ctx.fillText(enemy.dragon?`🐉 มังกร · ${Math.max(0,Math.ceil(enemy.hp))}/750`:`${Math.max(0,Math.ceil(enemy.hp))}/${Math.ceil(enemy.maxHp)}`,enemy.x,by-3);ctx.shadowBlur=0;ctx.textBaseline="middle";
+          ctx.fillText(enemy.dragon?`🐉 มังกร · ${Math.max(0,Math.ceil(enemy.hp))}/1000`:`${Math.max(0,Math.ceil(enemy.hp))}/${Math.ceil(enemy.maxHp)}`,enemy.x,by-3);ctx.shadowBlur=0;ctx.textBaseline="middle";
           const health=ctx.createLinearGradient(bx,by,bx+bw,by);
           health.addColorStop(0,enemy.dragon?"#ff554f":"#83e3a1");health.addColorStop(1,enemy.dragon?"#ffc265":"#a6f2b1");
           ctx.fillStyle="#17211e";roundedRect(bx,by,bw,bh,5);ctx.fill();
