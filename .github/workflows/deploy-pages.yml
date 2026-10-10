@@ -29,6 +29,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html _site/index.html
+          cp -R assets _site/assets
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
